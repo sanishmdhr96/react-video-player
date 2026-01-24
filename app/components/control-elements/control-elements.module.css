@@ -1,3 +1,4 @@
+/* Button Base */
 .controlButton {
   background: none;
   border: none;
@@ -28,22 +29,25 @@
 }
 
 /* Volume Control */
-.volumeControl {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.volumeContainer {
   position: relative;
 }
 
 .volumeSlider {
-  width: 80px;
-  height: 4px;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
+  transform-origin: center bottom;
+  width: 100px;
+  margin-bottom: 50px;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
   background: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
   outline: none;
+  height: 4px;
 }
 
 .volumeSlider::-webkit-slider-thumb {
@@ -65,69 +69,16 @@
   border: none;
 }
 
-/* Progress Bar */
-.progressContainer {
-  width: 100%;
-  height: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.progressBackground {
-  position: relative;
-  width: 100%;
-  height: 4px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-  overflow: visible;
-}
-
-.bufferedSegment {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.5);
-}
-
-.progress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background-color: #0066cc;
-  border-radius: 2px;
-  transition: width 0.1s linear;
-}
-
-.scrubHandle {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
-  background-color: white;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.progressContainer:hover .scrubHandle {
-  opacity: 1;
-}
-
-.hoverIndicator {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 2px;
-  height: 8px;
-  background-color: rgba(255, 255, 255, 0.6);
+/* Time Display */
+.timeDisplay {
+  color: white;
+  font-size: 14px;
+  user-select: none;
+  white-space: nowrap;
 }
 
 /* Settings Menu */
-.settingsMenu {
+.settingsContainer {
   position: relative;
 }
 
@@ -135,24 +86,24 @@
   position: absolute;
   bottom: 100%;
   right: 0;
-  margin-bottom: 8px;
   background-color: rgba(0, 0, 0, 0.9);
   border-radius: 4px;
   padding: 8px;
-  min-width: 100px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  margin-bottom: 8px;
+  min-width: 120px;
+  z-index: 10;
 }
 
 .settingsOption {
   display: block;
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px;
   background: none;
   border: none;
   color: white;
-  text-align: left;
   cursor: pointer;
-  border-radius: 4px;
+  text-align: left;
+  border-radius: 2px;
   font-size: 14px;
   transition: background-color 0.2s;
 }
@@ -162,6 +113,5 @@
 }
 
 .settingsOption.active {
-  background-color: rgba(0, 102, 204, 0.5);
-  font-weight: 600;
+  background-color: rgba(59, 130, 246, 0.5);
 }

@@ -1,21 +1,7 @@
 "use client";
 
-import React from "react";
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import HLS from "hls.js";
-import {
-  type PlaybackRate,
-  type PlayerState,
-  type VideoPlayerRef,
-} from "../lib/types";
-import {
-  destroyHLS,
-  handleHLSError,
-  hlsErrorToPlayerError,
-  initializeHLS,
-} from "../lib/hls";
-import { isHLSUrl } from "../lib/format";
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { PlayerState, VideoPlayerRef, PlaybackRate } from "../lib/types";
 
 interface UseVideoPlayerOptions {
   autoplay?: boolean;
@@ -33,11 +19,12 @@ interface UseVideoPlayerOptions {
 }
 
 export function useVideoPlayer(
-  videoRef: React.RefObject<HTMLVideoElement>,
+  videoRef: React.RefObject<HTMLVideoElement | null>,
   options: UseVideoPlayerOptions = {},
 ) {
-  const hlsRef = useRef<HLS | null>(null);
+  const hlsRef = useRef<any>(null);
   const fullscreenContainerRef = useRef<HTMLElement | null>(null);
+
   const [state, setState] = useState<PlayerState>({
     isPlaying: false,
     currentTime: 0,
@@ -103,6 +90,7 @@ export function useVideoPlayer(
           | "MEDIA_ERR_DECODE"
           | "MEDIA_ERR_SRC_NOT_SUPPORTED"
           | "UNKNOWN" = "UNKNOWN";
+
         switch (error.code) {
           case 1:
             code = "MEDIA_ERR_ABORTED";
@@ -119,10 +107,12 @@ export function useVideoPlayer(
           default:
             code = "UNKNOWN";
         }
+
         const playerError = {
           code,
           message: error.message || "Unknown media error",
         };
+
         setState((prev) => ({ ...prev, error: playerError }));
         options.onError?.(playerError);
       }
@@ -136,6 +126,10 @@ export function useVideoPlayer(
     const handleCanPlay = () => {
       setState((prev) => ({ ...prev, isBuffering: false }));
       options.onBuffering?.(false);
+    };
+
+    const handlePlaying = () => {
+      setState((prev) => ({ ...prev, isBuffering: false }));
     };
 
     const handleProgress = () => {
@@ -174,14 +168,15 @@ export function useVideoPlayer(
     video.addEventListener("error", handleError);
     video.addEventListener("waiting", handleWaiting);
     video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("playing", handlePlaying);
     video.addEventListener("progress", handleProgress);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-    document.addEventListener(
+    video.addEventListener(
       "enterpictureinpicture",
       handlePictureInPictureChange,
     );
-    document.addEventListener(
+    video.addEventListener(
       "leavepictureinpicture",
       handlePictureInPictureChange,
     );
@@ -202,17 +197,18 @@ export function useVideoPlayer(
       video.removeEventListener("error", handleError);
       video.removeEventListener("waiting", handleWaiting);
       video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("playing", handlePlaying);
       video.removeEventListener("progress", handleProgress);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener(
         "webkitfullscreenchange",
         handleFullscreenChange,
       );
-      document.removeEventListener(
+      video.removeEventListener(
         "enterpictureinpicture",
         handlePictureInPictureChange,
       );
-      document.removeEventListener(
+      video.removeEventListener(
         "leavepictureinpicture",
         handlePictureInPictureChange,
       );
@@ -245,7 +241,7 @@ export function useVideoPlayer(
     (time: number) => {
       const video = videoRef.current;
       if (video) {
-        video.currentTime = Math.max(0, Math.min(time, video.duration));
+        video.currentTime = Math.max(0, Math.min(time, video.duration || time));
       }
     },
     [videoRef],
@@ -255,7 +251,9 @@ export function useVideoPlayer(
     (volume: number) => {
       const video = videoRef.current;
       if (video) {
-        video.volume = Math.max(0, Math.min(volume, 1));
+        const clampedVolume = Math.max(0, Math.min(volume, 1));
+        video.volume = clampedVolume;
+        video.muted = clampedVolume === 0;
       }
     },
     [videoRef],
@@ -279,15 +277,21 @@ export function useVideoPlayer(
     if (!container) return;
 
     try {
-      if (!document.fullscreenElement) {
-        await container.requestFullscreen().catch(() => {
-          // Fallback for webkit
-          (container as any).webkitRequestFullscreen?.();
-        });
+      if (
+        !document.fullscreenElement &&
+        !(document as any).webkitFullscreenElement
+      ) {
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if ((container as any).webkitRequestFullscreen) {
+          (container as any).webkitRequestFullscreen();
+        }
       } else {
-        document.exitFullscreen().catch(() => {
-          (document as any).webkitExitFullscreen?.();
-        });
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        }
       }
     } catch (err) {
       console.error("Fullscreen toggle failed:", err);
@@ -301,7 +305,7 @@ export function useVideoPlayer(
     try {
       if (document.pictureInPictureElement) {
         await document.exitPictureInPicture();
-      } else {
+      } else if (video.requestPictureInPicture) {
         await video.requestPictureInPicture();
       }
     } catch (err) {

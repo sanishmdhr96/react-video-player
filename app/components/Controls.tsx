@@ -1,34 +1,27 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { type PlaybackRate, type PlayerState, type VideoPlayerRef } from "../lib/types";
-import { formatTime } from "../lib/format";
-import {
-  PlayButton,
-  PauseButton,
-  VolumeControl,
-  ProgressBar,
-  SettingsMenu,
-  FullscreenButton,
-  PiPButton,
-} from "./ControlElements";
-import styles from "./Controls.module.css";
+import type { PlaybackRate, PlayerState, VideoPlayerRef } from "../lib/types";
+import ControlElements from "./control-elements";
 
 interface ControlsProps {
   state: PlayerState;
   playerRef: VideoPlayerRef;
   playbackRates: PlaybackRate[];
+  enablePreview?: boolean;
+  enablePrefetch?: boolean;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
   state,
   playerRef,
   playbackRates,
+  enablePreview = true,
+  enablePrefetch = true,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showControls, setShowControls] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
 
   // Auto-hide controls on inactivity
   useEffect(() => {
@@ -53,8 +46,6 @@ export const Controls: React.FC<ControlsProps> = ({
     if (container) {
       container.addEventListener("mousemove", resetHideTimer);
       container.addEventListener("mouseenter", resetHideTimer);
-      container.addEventListener("click", resetHideTimer);
-      container.addEventListener("keydown", resetHideTimer);
     }
 
     resetHideTimer();
@@ -63,8 +54,6 @@ export const Controls: React.FC<ControlsProps> = ({
       if (container) {
         container.removeEventListener("mousemove", resetHideTimer);
         container.removeEventListener("mouseenter", resetHideTimer);
-        container.removeEventListener("click", resetHideTimer);
-        container.removeEventListener("keydown", resetHideTimer);
       }
 
       if (hideTimeoutRef.current) {
@@ -144,49 +133,75 @@ export const Controls: React.FC<ControlsProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`${styles.controls} ${showControls ? styles.visible : styles.hidden}`}
+      style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+        padding: "16px",
+        opacity: showControls ? 1 : 0,
+        transition: "opacity 0.3s",
+        pointerEvents: showControls ? "auto" : "none",
+      }}
+      onMouseEnter={() => setShowControls(true)}
       role="region"
       aria-label="Video player controls"
-      data-test="controls-container"
     >
       {/* Progress bar */}
-      <ProgressBar state={state} playerRef={playerRef} />
+      <ControlElements.ProgressBar
+        state={state}
+        playerRef={playerRef}
+        enablePreview={enablePreview}
+        enablePrefetch={enablePrefetch}
+      />
 
       {/* Bottom controls bar */}
-      <div className={styles.controlsBar}>
-        <div className={styles.controlsLeft}>
-          {state.isPlaying ? (
-            <PauseButton onClick={() => playerRef.pause()} />
-          ) : (
-            <PlayButton onClick={() => playerRef.play()} />
-          )}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          marginTop: "8px",
+        }}
+      >
+        {/* Play/Pause button */}
+        {state.isPlaying ? (
+          <ControlElements.PauseButton onClick={() => playerRef.pause()} />
+        ) : (
+          <ControlElements.PlayButton onClick={() => playerRef.play()} />
+        )}
 
-          <VolumeControl
-            volume={state.volume}
-            isMuted={state.isMuted}
-            onVolumeChange={(v) => playerRef.setVolume(v)}
-          />
+        {/* Volume control */}
+        <ControlElements.VolumeControl
+          volume={state.volume}
+          isMuted={state.isMuted}
+          onVolumeChange={(v) => playerRef.setVolume(v)}
+        />
 
-          <div className={styles.timeDisplay}>
-            <span className={styles.currentTime}>{formatTime(state.currentTime)}</span>
-            <span className={styles.separator}> / </span>
-            <span className={styles.duration}>{formatTime(state.duration)}</span>
-          </div>
-        </div>
+        {/* Time display */}
+        <ControlElements.TimeDisplay currentTime={state.currentTime} duration={state.duration} />
 
-        <div className={styles.controlsRight}>
-          <SettingsMenu
-            currentRate={state.playbackRate}
-            playbackRates={playbackRates}
-            onRateChange={(rate) => playerRef.setPlaybackRate(rate)}
-            isOpen={showSettings}
-            onOpenChange={setShowSettings}
-          />
+        <div style={{ flex: 1 }} />
 
-          <PiPButton onClick={() => playerRef.togglePictureInPicture()} />
+        {/* Settings menu */}
+        <ControlElements.SettingsMenu
+          currentRate={state.playbackRate}
+          playbackRates={playbackRates}
+          onRateChange={(rate) => playerRef.setPlaybackRate(rate)}
+        />
 
-          <FullscreenButton onClick={() => playerRef.toggleFullscreen()} />
-        </div>
+        {/* Picture-in-Picture button */}
+        <ControlElements.PiPButton
+          onClick={() => playerRef.togglePictureInPicture()}
+          isPiP={state.isPictureInPicture}
+        />
+
+        {/* Fullscreen button */}
+        <ControlElements.FullscreenButton
+          onClick={() => playerRef.toggleFullscreen()}
+          isFullscreen={state.isFullscreen}
+        />
       </div>
     </div>
   );
