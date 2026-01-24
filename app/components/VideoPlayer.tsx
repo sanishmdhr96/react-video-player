@@ -3,8 +3,6 @@
 import React, { forwardRef, useEffect, useRef } from "react";
 import { type VideoPlayerProps, type VideoPlayerRef } from "../lib/types";
 import { useVideoPlayer } from "../hooks/useVideoPlayer";
-import { destroyHLS, initializeHLS } from "../lib/hls";
-import { isHLSUrl, getMimeType } from "../lib/format";
 import { Controls } from "./Controls";
 import styles from "./VideoPlayer.module.css";
 
@@ -33,7 +31,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
   ) => {
     const videoRef = useRef<HTMLVideoElement>(null) as React.RefObject<HTMLVideoElement>;
     const containerRef = useRef<HTMLDivElement>(null);
-    const hlsInstanceRef = useRef<any>(null);
 
     const {
       state,
@@ -60,33 +57,16 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       fullscreenContainerRef.current = containerRef.current;
     }, [fullscreenContainerRef]);
 
-    // Initialize HLS if needed
+    // Load video source
     useEffect(() => {
       const video = videoRef.current;
-      if (!video || !enableHLS || !isHLSUrl(src)) {
-        // Regular MP4 source
-        if (video) {
-          video.src = src;
-        }
-        return;
-      }
+      if (!video) return;
 
-      // Initialize HLS
-      hlsInstanceRef.current = initializeHLS(video, src);
-      hlsRef.current = hlsInstanceRef.current;
-
-      if (hlsInstanceRef.current) {
-        hlsInstanceRef.current.on("error", (event: any, data: any) => {
-          if (!playerRef.getState().error) {
-            onError?.(data);
-          }
-        });
-      }
-
-      return () => {
-        destroyHLS(hlsInstanceRef.current);
-      };
-    }, [src, enableHLS, hlsRef, playerRef, onError]);
+      // Simple approach: just set the src directly
+      // HLS support removed for simplicity
+      video.src = src;
+      video.load();
+    }, [src]);
 
     // Expose ref
     React.useImperativeHandle(forwardedRef, () => playerRef, [playerRef]);

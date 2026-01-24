@@ -178,7 +178,11 @@ export function useVideoPlayer(
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
     document.addEventListener(
-      "pictureInPicturechange",
+      "enterpictureinpicture",
+      handlePictureInPictureChange,
+    );
+    document.addEventListener(
+      "leavepictureinpicture",
       handlePictureInPictureChange,
     );
 
@@ -205,7 +209,11 @@ export function useVideoPlayer(
         handleFullscreenChange,
       );
       document.removeEventListener(
-        "pictureInPicturechange",
+        "enterpictureinpicture",
+        handlePictureInPictureChange,
+      );
+      document.removeEventListener(
+        "leavepictureinpicture",
         handlePictureInPictureChange,
       );
     };
@@ -217,8 +225,11 @@ export function useVideoPlayer(
     if (video) {
       try {
         await video.play();
-      } catch (err) {
-        console.error("Play failed:", err);
+      } catch (err: any) {
+        // Silently ignore AbortError (interrupted by load)
+        if (err.name !== "AbortError") {
+          console.error("Play failed:", err);
+        }
       }
     }
   }, [videoRef]);

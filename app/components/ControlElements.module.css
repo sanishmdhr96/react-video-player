@@ -1,102 +1,94 @@
 .controlButton {
   background: none;
   border: none;
-  color: #fff;
+  color: white;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  transition: all 0.2s ease;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
   border-radius: 4px;
 }
 
 .controlButton:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  opacity: 0.8;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .controlButton:active {
-  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(0.95);
 }
 
 .controlButton svg {
-  width: 20px;
-  height: 20px;
-  pointer-events: none;
+  width: 24px;
+  height: 24px;
 }
 
 /* Volume Control */
 .volumeControl {
-  position: relative;
   display: flex;
   align-items: center;
+  gap: 8px;
+  position: relative;
 }
 
 .volumeSlider {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 80px;
-  margin-bottom: 8px;
+  width: 80px;
+  height: 4px;
   cursor: pointer;
-  appearance: slider-vertical;
-  writing-mode: bt-lr;
-  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  outline: none;
 }
 
 .volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
   width: 12px;
   height: 12px;
+  background: white;
   border-radius: 50%;
-  background: #fff;
   cursor: pointer;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
 .volumeSlider::-moz-range-thumb {
   width: 12px;
   height: 12px;
+  background: white;
   border-radius: 50%;
-  background: #fff;
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Progress Bar */
 .progressContainer {
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
+  height: 20px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
   margin-bottom: 8px;
-  position: relative;
-  transition: height 0.2s ease;
-}
-
-.progressContainer:hover {
-  height: 6px;
 }
 
 .progressBackground {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .bufferedSegment {
   position: absolute;
+  top: 0;
   height: 100%;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .progress {
@@ -104,21 +96,9 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: #e74c3c;
+  background-color: #0066cc;
   border-radius: 2px;
-  width: 0;
   transition: width 0.1s linear;
-}
-
-.hoverIndicator {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  background: #e74c3c;
-  border-radius: 50%;
-  pointer-events: none;
 }
 
 .scrubHandle {
@@ -127,36 +107,40 @@
   transform: translate(-50%, -50%);
   width: 12px;
   height: 12px;
-  background: #fff;
+  background-color: white;
   border-radius: 50%;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-  transition: width 0.2s ease, height 0.2s ease;
-  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
 .progressContainer:hover .scrubHandle {
-  width: 14px;
-  height: 14px;
+  opacity: 1;
+}
+
+.hoverIndicator {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.6);
 }
 
 /* Settings Menu */
 .settingsMenu {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .settingsDropdown {
   position: absolute;
   bottom: 100%;
   right: 0;
-  background: rgba(28, 28, 28, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  min-width: 60px;
   margin-bottom: 8px;
-  overflow: hidden;
-  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.9);
+  border-radius: 4px;
+  padding: 8px;
+  min-width: 100px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .settingsOption {
@@ -165,11 +149,12 @@
   padding: 8px 12px;
   background: none;
   border: none;
-  color: #fff;
-  text-align: center;
+  color: white;
+  text-align: left;
   cursor: pointer;
-  font-size: 12px;
-  transition: background-color 0.2s ease;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.2s;
 }
 
 .settingsOption:hover {
@@ -177,25 +162,6 @@
 }
 
 .settingsOption.active {
-  background-color: rgba(231, 76, 60, 0.5);
-  color: #fff;
+  background-color: rgba(0, 102, 204, 0.5);
   font-weight: 600;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .controlButton {
-    width: 28px;
-    height: 28px;
-  }
-
-  .controlButton svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .timeDisplay {
-    font-size: 11px;
-    margin-left: 4px;
-  }
 }

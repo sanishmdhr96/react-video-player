@@ -2,12 +2,13 @@
 
 import React from "react"
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { VideoPlayer } from './components/VideoPlayer';
 import type { VideoPlayerRef } from './lib/types';
 
 export default function Home() {
   const playerRef = useRef<VideoPlayerRef>(null);
+  const [currentVideo, setCurrentVideo] = useState('https://cimex.com.np/sealion-phone.mp4');
 
   return (
     <main style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -21,8 +22,8 @@ export default function Home() {
         <div style={{ aspectRatio: '16 / 9', width: '100%', marginBottom: '24px' }}>
           <VideoPlayer
             ref={playerRef}
-            src='./assets/video.mp4'
-            poster="https://peach.blender.org/wp-content/uploads/12.2.1_web.jpg"
+            src={currentVideo}
+            poster="https://cimex.com.np/sealion/1.webp"
             controls
             autoplay={false}
             playbackRates={[0.5, 0.75, 1, 1.25, 1.5, 2]}
@@ -178,22 +179,22 @@ export default function Home() {
           <VideoButton
             title="Big Buck Bunny"
             url="https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4"
-            playerRef={playerRef}
+            onClick={setCurrentVideo}
           />
           <VideoButton
             title="Elephants Dream"
             url="https://commondatastorage.googleapis.com/gtv-videos-library/sample/ElephantsDream.mp4"
-            playerRef={playerRef}
+            onClick={setCurrentVideo}
           />
           <VideoButton
             title="Sintel"
             url="https://commondatastorage.googleapis.com/gtv-videos-library/sample/Sintel.mp4"
-            playerRef={playerRef}
+            onClick={setCurrentVideo}
           />
           <VideoButton
             title="Tears of Steel"
             url="https://commondatastorage.googleapis.com/gtv-videos-library/sample/TearsOfSteel.mp4"
-            playerRef={playerRef}
+            onClick={setCurrentVideo}
           />
         </div>
       </section>
@@ -295,20 +296,15 @@ function ShortcutItem({ keys, action }: { keys: string; action: string }) {
 function VideoButton({
   title,
   url,
-  playerRef,
+  onClick,
 }: {
   title: string;
   url: string;
-  playerRef: React.RefObject<VideoPlayerRef | null>;
+  onClick: (url: string) => void;
 }) {
   return (
     <button
-      onClick={() => {
-        // Reload video by seeking to 0
-        playerRef.current?.seek(0);
-        // Note: In a real app, you'd update the src prop instead
-        console.log('Loading:', title);
-      }}
+      onClick={() => onClick(url)}
       style={{
         ...buttonStyle,
         width: '100%',
