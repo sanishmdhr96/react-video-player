@@ -1,0 +1,201 @@
+.controlButton {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.controlButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.controlButton:active {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.controlButton svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+/* Volume Control */
+.volumeControl {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.volumeSlider {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 80px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  appearance: slider-vertical;
+  writing-mode: bt-lr;
+  background: transparent;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.volumeSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Progress Bar */
+.progressContainer {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  position: relative;
+  transition: height 0.2s ease;
+}
+
+.progressContainer:hover {
+  height: 6px;
+}
+
+.progressBackground {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bufferedSegment {
+  position: absolute;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+}
+
+.progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #e74c3c;
+  border-radius: 2px;
+  width: 0;
+  transition: width 0.1s linear;
+}
+
+.hoverIndicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #e74c3c;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.scrubHandle {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  transition: width 0.2s ease, height 0.2s ease;
+  pointer-events: none;
+}
+
+.progressContainer:hover .scrubHandle {
+  width: 14px;
+  height: 14px;
+}
+
+/* Settings Menu */
+.settingsMenu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.settingsDropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: rgba(28, 28, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  min-width: 60px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.settingsOption {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.settingsOption:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settingsOption.active {
+  background-color: rgba(231, 76, 60, 0.5);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .controlButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .controlButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .timeDisplay {
+    font-size: 11px;
+    margin-left: 4px;
+  }
+}
