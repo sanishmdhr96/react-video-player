@@ -29,6 +29,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .controlsLeft {
@@ -58,4 +59,20 @@
 
 .separator {
   opacity: 0.7;
+}
+
+@media (max-width: 640px) {
+  .controlsBar {
+    gap: 4px;
+  }
+
+  .timeDisplay {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controlButton {
+    padding: 6px;
+  }
 }

@@ -187,6 +187,31 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
         [isDragging, getTimeFromPosition, playerRef]
     );
 
+    const handleTouchStart = useCallback(
+        (e: React.TouchEvent<HTMLDivElement>) => {
+            e.preventDefault();
+            setIsDragging(true);
+            const touch = e.touches[0];
+            const time = getTimeFromPosition(touch.clientX);
+            playerRef.seek(time);
+        },
+        [getTimeFromPosition, playerRef]
+    );
+
+    const handleTouchMove = useCallback(
+        (e: React.TouchEvent<HTMLDivElement>) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            const time = getTimeFromPosition(touch.clientX);
+            playerRef.seek(time);
+        },
+        [isDragging, getTimeFromPosition, playerRef]
+    );
+
+    const handleTouchEnd = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
     // Cleanup
     useEffect(() => {
         return () => {
@@ -214,6 +239,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onClick={handleClick}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             role="slider"
             aria-label="Video progress"
             aria-valuemin={0}

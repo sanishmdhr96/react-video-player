@@ -4,7 +4,9 @@
   border: none;
   color: white;
   cursor: pointer;
-  padding: 8px;
+  padding: 12px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,6 +28,14 @@
 .controlButton svg {
   width: 24px;
   height: 24px;
+}
+
+@media (max-width: 640px) {
+  .controlButton {
+    padding: 10px;
+    min-width: 40px;
+    min-height: 40px;
+  }
 }
 
 /* Volume Control */
