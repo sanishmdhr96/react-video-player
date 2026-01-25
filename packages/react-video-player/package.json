@@ -1,6 +1,6 @@
 {
   "name": "@sanishmdhr/react-video-player",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Production-grade React video player with YouTube-style features",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
