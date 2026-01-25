@@ -9,7 +9,8 @@ export default function DemoPage() {
   const [activeTab, setActiveTab] = useState("demo");
 
   const handleControl = (action: string) => {
-    console.log(`${action} triggered`);
+    playerRef.current?.[action as keyof typeof playerRef.current]?.();
+
   };
 
   return (
