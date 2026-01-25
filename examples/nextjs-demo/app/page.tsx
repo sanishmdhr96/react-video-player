@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { Play, Pause, SkipForward, Volume2, Maximize, PictureInPicture, Zap, Smartphone, Code, Shield } from "lucide-react";
-import { VideoPlayer } from "@sanish/react-video-player";
+import { VideoPlayer } from "@sanishmdhr/react-video-player";
 
 export default function DemoPage() {
   const playerRef = useRef<any>(null);
@@ -19,7 +19,7 @@ export default function DemoPage() {
       <header style={{ padding: "40px 24px", textAlign: "center", color: "white" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ display: "inline-block", padding: "8px 20px", backgroundColor: "rgba(255,255,255,0.2)", borderRadius: "50px", fontSize: "14px", fontWeight: "600", marginBottom: "20px", backdropFilter: "blur(10px)" }}>
-            @sanish/react-video-player
+            @sanishmdhr/react-video-player
           </div>
           <h1 style={{ fontSize: "56px", fontWeight: "800", margin: "0 0 20px 0", letterSpacing: "-1px" }}>
             Production-Ready<br />Video Player
@@ -213,9 +213,9 @@ export default function DemoPage() {
           <h2 style={{ fontSize: "32px", fontWeight: "800", marginBottom: "24px", color: "#333" }}>Quick Start</h2>
           <div style={{ backgroundColor: "#1e1e1e", color: "#d4d4d4", padding: "24px", borderRadius: "12px", fontFamily: "monospace", fontSize: "14px", marginBottom: "20px", overflowX: "auto" }}>
             <div style={{ color: "#6a9955" }}>// Install</div>
-            <div style={{ marginBottom: "16px" }}>npm install @sanish/react-video-player</div>
+            <div style={{ marginBottom: "16px" }}>npm install @sanishmdhr/react-video-player</div>
             <div style={{ color: "#6a9955" }}>// Import and use</div>
-            <div><span style={{ color: "#c586c0" }}>import</span> {'{ VideoPlayer }'} <span style={{ color: "#c586c0" }}>from</span> <span style={{ color: "#ce9178" }}>"@sanish/react-video-player"</span>;</div>
+            <div><span style={{ color: "#c586c0" }}>import</span> {'{ VideoPlayer }'} <span style={{ color: "#c586c0" }}>from</span> <span style={{ color: "#ce9178" }}>"@sanishmdhr/react-video-player"</span>;</div>
           </div>
           <p style={{ fontSize: "16px", color: "#666", lineHeight: "1.6" }}>
             Get started in seconds with a fully-featured video player. TypeScript types included, works with Next.js and plain React.

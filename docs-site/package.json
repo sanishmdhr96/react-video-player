@@ -11,7 +11,7 @@
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@sanish/react-video-player": "*"
+    "@sanishmdhr/react-video-player": "*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

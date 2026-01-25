@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { VideoPlayer, VideoPlayerRef } from "@sanish/react-video-player";
+import { VideoPlayer, VideoPlayerRef } from "@sanishmdhr/react-video-player";
 
 const buttonStyle: React.CSSProperties = {
   padding: "10px 16px",

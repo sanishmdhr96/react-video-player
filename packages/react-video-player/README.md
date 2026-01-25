@@ -21,8 +21,8 @@ npm install @your-username/react-video-player
 ## Quick Start
 
 ```tsx
-import { VideoPlayer } from "@sanish/react-video-player";
-import "@sanish/react-video-player/styles";
+import { VideoPlayer } from "@sanishmdhr/react-video-player";
+import "@sanishmdhr/react-video-player/styles";
 
 function App() {
   return (

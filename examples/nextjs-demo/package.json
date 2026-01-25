@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@sanish/react-video-player": "*",
+    "@sanishmdhr/react-video-player": "*",
     "lucide-react": "^0.563.0",
     "next": "16.1.4",
     "react": "19.2.3",
