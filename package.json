@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "examples/*"
+    "docs-site",
+    "examples/*",
+    "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/react-video-player",
-    "dev": "npm run dev --workspace=examples/nextjs-demo",
+    "dev": "npm run dev --workspace=docs-site",
+    "dev:example": "npm run dev --workspace=examples/nextjs-demo",
     "dev:package": "npm run dev --workspace=packages/react-video-player",
-    "publish:package": "npm run build && npm publish --workspace=packages/react-video-player --access public",
-    "clean": "rm -rf node_modules packages/*/node_modules examples/*/node_modules packages/*/dist"
+    "build": "npm run build --workspace=packages/react-video-player",
+    "build:docs": "npm run build --workspace=docs-site",
+    "build:example": "npm run build --workspace=examples/nextjs-demo"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.23",
