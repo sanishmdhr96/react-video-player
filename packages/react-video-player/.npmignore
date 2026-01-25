@@ -1,0 +1,14 @@
+src/
+tests/
+examples/
+.git/
+.gitignore
+tsconfig.json
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+node_modules/
+coverage/
+.env
+.DS_Store
