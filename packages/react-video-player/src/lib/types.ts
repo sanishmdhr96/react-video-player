@@ -57,3 +57,9 @@ export interface VideoPlayerProps {
   onDurationChange?: (duration: number) => void;
   onBuffering?: (isBuffering: boolean) => void;
 }
+
+export interface PlayerError {
+  code: string;
+  message: string;
+  details?: any;
+}

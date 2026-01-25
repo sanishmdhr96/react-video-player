@@ -1,10 +1,14 @@
-import HLS, { type HLSConfig } from "hls.js";
-import { type PlayerError } from "../types";
+import HLS, { HlsConfig } from "hls.js";
+import { type PlayerError } from "./types";
 
 /**
- * Initialize HLS.js instance with sensible defaults
+ * Initialize HLS.js instance with defaults
  */
-export function initializeHLS(video: HTMLVideoElement, hlsUrl: string, config?: Partial<HLSConfig>) {
+export function initializeHLS(
+  video: HTMLVideoElement,
+  hlsUrl: string,
+  config?: Partial<HlsConfig>,
+) {
   if (!HLS.isSupported()) {
     console.warn("HLS.js is not supported in this browser");
     video.src = hlsUrl;
@@ -14,16 +18,15 @@ export function initializeHLS(video: HTMLVideoElement, hlsUrl: string, config?: 
   const hls = new HLS({
     autoStartLoad: true,
     startLevel: undefined,
-    capLevelOnFPS: true,
+    capLevelOnFPSDrop: true,
     capLevelToPlayerSize: true,
     enableWorker: true,
-    // Adaptive bitrate switching
+
     abrEwmaFastLive: 3,
     abrEwmaSlowLive: 9,
     abrEwmaFastVoD: 3,
     abrEwmaSlowVoD: 9,
-    abrBandwidthFactor: 0.95,
-    abrBandwidthSafetyFactor: 0.9,
+    abrBandWidthFactor: 0.95,
     maxBufferLength: 30,
     maxMaxBufferLength: 60,
     maxBufferSize: 60 * 1000 * 1000, // 60MB
@@ -61,7 +64,10 @@ export function handleHLSError(hls: HLS, data: any): boolean {
         hls.startLoad();
         return true;
       case HLS.ErrorTypes.MEDIA_ERROR:
-        console.error("Fatal media error encountered, recovery attempted", data);
+        console.error(
+          "Fatal media error encountered, recovery attempted",
+          data,
+        );
         hls.recoverMediaError();
         return true;
       default:
