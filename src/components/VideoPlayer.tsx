@@ -66,6 +66,8 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
     React.useImperativeHandle(forwardedRef, () => playerRef, [playerRef]);
 
     const handleVideoClick = useCallback(() => {
+      // Focus the container so keyboard shortcuts activate for this player (fix #8)
+      containerRef.current?.focus();
       if (state.isPlaying) playerRef.pause();
       else playerRef.play();
     }, [state.isPlaying, playerRef]);
@@ -89,12 +91,14 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
     return (
       <div
         ref={containerRef}
+        tabIndex={0}
         style={{
           position: "relative",
           width: "100%",
           backgroundColor: "#000",
           aspectRatio: "16 / 9",
           userSelect: "none",
+          outline: "none",
         }}
         className={className}
         data-test="video-player-container"
@@ -125,6 +129,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         {controls && (
           <Controls
             playerRef={playerRef}
+            playerContainerRef={containerRef}
             playbackRates={playbackRates}
             enablePreview={enablePreview && !isHLSSrc}
             // ── Flat state fields ──────────────────────────────────────────

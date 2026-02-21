@@ -5,8 +5,17 @@ export interface BufferedRange {
   end: number;
 }
 
+export type VideoErrorCode =
+  | "MEDIA_ERR_ABORTED"
+  | "MEDIA_ERR_NETWORK"
+  | "MEDIA_ERR_DECODE"
+  | "MEDIA_ERR_SRC_NOT_SUPPORTED"
+  | "HLS_NETWORK_ERROR"
+  | "HLS_FATAL_ERROR"
+  | "UNKNOWN";
+
 export interface VideoError {
-  code: string;
+  code: VideoErrorCode;
   message: string;
 }
 

@@ -16,6 +16,7 @@ export type {
   SubtitleTrack,
   BufferedRange,
   VideoError,
+  VideoErrorCode,
 } from "./lib/types";
 
 // Utilities

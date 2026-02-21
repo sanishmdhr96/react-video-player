@@ -43,6 +43,9 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSeekTimeRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
+  // Fix #6: ref so the non-passive touchmove listener can read isDragging
+  const isDraggingRef = useRef(false);
+  isDraggingRef.current = isDragging;
 
   /**
    * Cache the bounding rect so mouse-move doesn't trigger layout reflow
@@ -90,11 +93,26 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
       previewVideo.removeEventListener("loadedmetadata", onReady);
       previewVideo.removeEventListener("loadeddata", onReady);
       previewVideo.removeEventListener("error", onErr);
-      previewVideo.src = "";
+      // Fix #4: removeAttribute('src') avoids a spurious network request for ""
+      previewVideo.removeAttribute("src");
       previewVideo.load();
       setPreviewLoaded(false);
     };
   }, [playerRef, enablePreview]);
+
+  // ─── Fix #6: non-passive touchmove to prevent scroll only while scrubbing ──
+  // React 17+ attaches root listeners as passive, so calling e.preventDefault()
+  // in onTouchMove has no effect. We register a non-passive native listener
+  // that calls preventDefault only when a drag is in progress.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (isDraggingRef.current) e.preventDefault();
+    };
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => container.removeEventListener("touchmove", onTouchMove);
+  }, []);
 
   // ─── Draw preview frame ─────────────────────────────────────────────────
   const updatePreview = useCallback((time: number) => {
@@ -140,7 +158,8 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   // ─── Geometry helpers (no layout thrash) ───────────────────────────────
   const getTimeFromClientX = useCallback((clientX: number): number => {
     const rect = getRect();
-    if (!rect) return 0;
+    // Fix #9: guard against zero-width container (would produce NaN)
+    if (!rect || rect.width === 0) return 0;
     const pos = Math.max(0, Math.min(clientX - rect.left, rect.width));
     return (pos / rect.width) * duration;
   }, [getRect, duration]);
@@ -150,6 +169,38 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     if (!rect) return 0;
     return Math.max(0, Math.min(clientX - rect.left, rect.width));
   }, [getRect]);
+
+  // ─── Keyboard control (Fix #5) ──────────────────────────────────────────
+  // The slider has role="slider" and tabIndex={0}; ARIA requires keyboard
+  // navigation. stopImmediatePropagation prevents the Controls window-level
+  // handler from also firing for the same keypress.
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    switch (e.key) {
+      case "ArrowLeft":
+      case "ArrowRight": {
+        e.preventDefault();
+        e.nativeEvent.stopImmediatePropagation();
+        const step = e.shiftKey ? 10 : 5;
+        const newTime = e.key === "ArrowLeft"
+          ? Math.max(0, currentTime - step)
+          : Math.min(duration || 0, currentTime + step);
+        playerRef.seek(newTime);
+        break;
+      }
+      case "Home":
+        e.preventDefault();
+        e.nativeEvent.stopImmediatePropagation();
+        playerRef.seek(0);
+        break;
+      case "End":
+        if (duration > 0) {
+          e.preventDefault();
+          e.nativeEvent.stopImmediatePropagation();
+          playerRef.seek(duration);
+        }
+        break;
+    }
+  }, [currentTime, duration, playerRef]);
 
   // ─── Mouse / touch handlers ─────────────────────────────────────────────
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -188,8 +239,10 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     if (!isDragging) playerRef.seek(getTimeFromClientX(e.clientX));
   }, [isDragging, getTimeFromClientX, playerRef]);
 
+  // Fix #6: removed e.preventDefault() from touchstart — page scroll must not
+  // be blocked on initial touch. Scroll is only prevented during an active drag
+  // via the non-passive touchmove listener registered above.
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault();
     rectCacheRef.current = null; // Invalidate on touch start
     setIsDragging(true);
     playerRef.seek(getTimeFromClientX(e.touches[0].clientX));
@@ -251,6 +304,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onKeyDown={handleKeyDown}
       role="slider"
       aria-label="Video progress"
       aria-valuemin={0}
