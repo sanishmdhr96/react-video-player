@@ -3,7 +3,7 @@
 import React, { memo, useRef, useState, useEffect, useCallback, useMemo } from "react";
 import type { VideoPlayerRef, BufferedRange } from "../../lib/types";
 import { formatTime } from "../../lib/format";
-import "../../styles/ProgressBar.css";
+
 
 export interface ProgressBarProps {
   playerRef: VideoPlayerRef;
@@ -37,7 +37,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   isDraggingRef.current = isDragging;
 
   /**
-   * Cache the bounding rect so mouse-move doesn't trigger layout reflow
+   * Caching the bounding rect so mouse-move doesn't trigger layout reflow
    * on every pixel. Invalidated whenever the window is resized.
    */
   const rectCacheRef = useRef<DOMRect | null>(null);

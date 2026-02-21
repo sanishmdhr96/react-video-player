@@ -2,7 +2,6 @@
 
 import { memo } from "react";
 import { formatTime } from "../../lib/format";
-import "../../styles/ControlElements.css";
 
 export interface TimeDisplayProps {
   currentTime: number;
@@ -10,11 +9,7 @@ export interface TimeDisplayProps {
   isLive?: boolean;
 }
 
-/**
- * TimeDisplay re-renders every timeupdate tick (currentTime changes).
- * Wrapped in memo anyway so that if its specific props haven't changed
- * (e.g. when only volume changes) it skips the render.
- */
+
 const TimeDisplay = memo<TimeDisplayProps>(({ currentTime, duration, isLive = false }) => {
   if (isLive) {
     return (

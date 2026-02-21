@@ -2,7 +2,6 @@
 
 import { memo, useState, useRef, useEffect, useMemo } from "react";
 import type { PlaybackRate, HLSQualityLevel } from "../../lib/types";
-import "../../styles/ControlElements.css";
 
 export interface SettingsMenuProps {
   currentRate: number;
@@ -15,14 +14,6 @@ export interface SettingsMenuProps {
 
 type Tab = "speed" | "quality";
 
-/**
- * SettingsMenu wrapped in React.memo.
- * playbackRate and qualityLevel rarely change → this component skips
- * almost all re-renders during normal playback.
- *
- * sortedLevels is memoized so the .sort() only runs when qualityLevels
- * actually changes (usually once after manifest is parsed).
- */
 const SettingsMenu = memo<SettingsMenuProps>(({
   currentRate,
   playbackRates,
@@ -49,7 +40,7 @@ const SettingsMenu = memo<SettingsMenuProps>(({
   }, [open]);
 
   /**
-   * Sort once when qualityLevels changes – not on every render.
+   * Sort once when qualityLevels changes
    */
   const sortedLevels = useMemo(
     () => [...qualityLevels].sort((a, b) => b.bitrate - a.bitrate),

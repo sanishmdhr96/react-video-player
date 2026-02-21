@@ -436,11 +436,6 @@ export function useVideoPlayer(
     }
   }, [videoRef]);
 
-  /**
-   * getState reads from stateRef so it doesn't need `state` in its deps.
-   * This keeps it stable (same function reference) across all renders,
-   * which in turn keeps the VideoPlayerRef object stable (via useMemo).
-   */
   const getState = useCallback(
     (): PlayerState => ({ ...stateRef.current }),
     [],

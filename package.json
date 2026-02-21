@@ -16,10 +16,13 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./styles": "./dist/styles.css"
+    "./styles": {
+      "types": "./dist/styles.d.ts",
+      "default": "./dist/styles.css"
+    }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node -e \"require('fs').writeFileSync('dist/styles.d.ts', 'export {};\\n');\"",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"

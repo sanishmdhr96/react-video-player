@@ -81,12 +81,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       [enableHLS, src],
     );
 
-    /**
-     * Pass FLAT state props to Controls instead of the whole state object.
-     * With React.memo on each control sub-component this ensures that
-     * buttons / volume / settings only re-render when THEIR props change –
-     * not on every timeupdate tick.
-     */
+
     return (
       <div
         ref={containerRef}

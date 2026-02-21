@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useState, useMemo } from "react";
-import "../../styles/ControlElements.css";
 
 export interface VolumeControlProps {
   volume: number;
@@ -10,11 +9,7 @@ export interface VolumeControlProps {
   onToggleMute: () => void;
 }
 
-/**
- * VolumeControl wrapped in React.memo.
- * volume and isMuted don't change during timeupdate → 0 re-renders during
- * normal playback when the user isn't touching volume controls.
- */
+
 const VolumeControl = memo<VolumeControlProps>(({
   volume,
   isMuted,
@@ -25,12 +20,6 @@ const VolumeControl = memo<VolumeControlProps>(({
   const displayVolume = isMuted ? 0 : volume;
   const percentage = displayVolume * 100;
 
-  /**
-   * Memoize the gradient background string so it's not recreated on every
-   * render of the parent that happens to pass the same volume value.
-   * This is a micro-optimisation but relevant because the gradient string
-   * is computed on every slider render.
-   */
   const sliderBackground = useMemo(
     () =>
       `linear-gradient(to right, #60a5fa 0%, #60a5fa ${percentage}%, rgba(255,255,255,0.3) ${percentage}%, rgba(255,255,255,0.3) 100%)`,

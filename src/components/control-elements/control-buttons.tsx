@@ -1,19 +1,12 @@
 "use client";
 
 import { memo } from "react";
-import "../../styles/ControlElements.css";
 
 export interface PlayButtonProps { onClick: () => void; }
 export interface PauseButtonProps { onClick: () => void; }
 export interface FullscreenButtonProps { onClick: () => void; isFullscreen?: boolean; }
 export interface PiPButtonProps { onClick: () => void; isPiP?: boolean; }
 
-/**
- * All button components are wrapped in React.memo.
- * They receive stable callback refs (useCallback in Controls), so they
- * only re-render when their specific props (isFullscreen, isPiP, etc.)
- * actually change – not on every timeupdate tick.
- */
 export const PlayButton = memo<PlayButtonProps>(({ onClick }) => (
   <button onClick={onClick} className="controlButton" aria-label="Play" title="Play (Space)">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

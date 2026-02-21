@@ -19,12 +19,12 @@ export interface VideoError {
   message: string;
 }
 
+/** Display name e.g. "1080p", "720p", "Auto" */
 export interface HLSQualityLevel {
   id: number;
   height: number;
   width: number;
   bitrate: number;
-  /** Display name e.g. "1080p", "720p", "Auto" */
   name: string;
 }
 
@@ -48,11 +48,8 @@ export interface PlayerState {
   error: VideoError | null;
   isFullscreen: boolean;
   isPictureInPicture: boolean;
-  /** True when the stream is a live HLS stream (Infinity duration) */
   isLive: boolean;
-  /** Available HLS quality levels; empty for non-HLS sources */
   qualityLevels: HLSQualityLevel[];
-  /** Currently active quality level id; -1 = ABR auto */
   currentQualityLevel: number;
 }
 
@@ -63,12 +60,9 @@ export interface VideoPlayerRef {
   pause: () => void;
   seek: (time: number) => void;
   setVolume: (volume: number) => void;
-  /** Toggle mute while remembering the pre-mute volume */
   toggleMute: () => void;
   setPlaybackRate: (rate: PlaybackRate) => void;
-  /** Set HLS quality level; pass -1 for automatic ABR */
   setQualityLevel: (level: number) => void;
-  /** Jump to the live edge of an HLS live stream */
   seekToLive: () => void;
   toggleFullscreen: () => Promise<void>;
   togglePictureInPicture: () => Promise<void>;
@@ -88,11 +82,8 @@ export interface VideoPlayerProps {
   className?: string;
   enableHLS?: boolean;
   enablePreview?: boolean;
-  /** Additional hls.js configuration options */
   hlsConfig?: Partial<HlsConfig>;
-  /** Subtitle / caption tracks */
   subtitles?: SubtitleTrack[];
-  /** crossorigin attribute for CORS-enabled preview thumbnails */
   crossOrigin?: "anonymous" | "use-credentials";
   onPlay?: () => void;
   onPause?: () => void;
