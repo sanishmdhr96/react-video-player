@@ -71,13 +71,12 @@ export default function DemoPage() {
                 <VideoPlayer
                   ref={playerRef}
                   src="https://cimex.com.np/sealion-phone.mp4"
-                  poster="https://cimex.com.np/sealion/1.webp"
                   controls
                   autoplay={false}
-                  playbackRates={[0.5, 0.75, 1, 1.25, 1.5, 2]}
+                  playbackRates={[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]}
                   enablePreview={true}
-                  enablePrefetch={true}
-                  onError={(error: any) => console.error("Video error:", error)}
+                  enableHLS={true}
+                  onError={(error) => console.error("Video error:", error)}
                 />
               </div>
 
@@ -178,13 +177,14 @@ export default function DemoPage() {
           {activeTab === "shortcuts" && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
               {[
-                { key: "Space", action: "Play / Pause" },
+                { key: "Space / K", action: "Play / Pause" },
                 { key: "← →", action: "Seek ±5 seconds" },
                 { key: "↑ ↓", action: "Volume ±10%" },
-                { key: "M", action: "Mute / Unmute" },
+                { key: "M", action: "Mute / Unmute (restores volume)" },
                 { key: "F", action: "Toggle Fullscreen" },
                 { key: "P", action: "Picture-in-Picture" },
-                { key: "0-9", action: "Jump to 0-90%" }
+                { key: "L", action: "Seek to Live edge (live streams)" },
+                { key: "0-9", action: "Jump to 0–90%" }
               ].map(({ key, action }) => (
                 <div key={key} style={{ padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "12px", border: "2px solid #e9ecef" }}>
                   <div style={{

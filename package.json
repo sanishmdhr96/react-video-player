@@ -1,24 +1,68 @@
 {
-  "name": "react-video-player-monorepo",
-  "version": "1.0.0",
-  "private": true,
-  "workspaces": [
-    "docs-site",
-    "examples/*",
-    "packages/*"
+  "name": "@sanishmdhr/react-video-player",
+  "version": "1.1.0",
+  "description": "Production-grade React video player with HLS, quality selection, live streams, subtitles, and thumbnail preview",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./styles": "./dist/styles.css"
+  },
   "scripts": {
-    "dev": "npm run dev --workspace=docs-site",
-    "dev:example": "npm run dev --workspace=examples/nextjs-demo",
-    "dev:package": "npm run dev --workspace=packages/react-video-player",
-    "build": "npm run build --workspace=packages/react-video-player",
-    "build:docs": "npm run build --workspace=docs-site",
-    "build:example": "npm run build --workspace=examples/nextjs-demo"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "video",
+    "player",
+    "video-player",
+    "hls",
+    "hls.js",
+    "live-stream",
+    "thumbnail",
+    "preview",
+    "quality",
+    "subtitles",
+    "captions",
+    "typescript",
+    "nextjs",
+    "picture-in-picture"
+  ],
+  "author": "Sanish Manandhar <mail.sanishmanandhar@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanishmdhr96/react-video-player"
+  },
+  "bugs": {
+    "url": "https://github.com/sanishmdhr96/react-video-player/issues"
+  },
+  "homepage": "https://github.com/sanishmdhr96/react-video-player#readme",
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "hls.js": "^1.6.15"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.23",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.19",
-    "typescript": "^5.0.0"
+    "@types/node": "^25.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0"
   }
 }

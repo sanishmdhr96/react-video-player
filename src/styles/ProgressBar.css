@@ -1,0 +1,141 @@
+/* ─── Progress bar container ─────────────────────────────────────────────── */
+.progressContainer {
+  position: relative;
+  width: 100%;
+  /* Tall hit area so scrub feels easy to grab on touch and mouse */
+  padding: 10px 0;
+  cursor: pointer;
+  /* Expand the clickable zone without affecting layout neighbours */
+  box-sizing: content-box;
+}
+
+.progressContainer:focus {
+  outline: none;
+}
+
+.progressContainer:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ─── Hidden preview video ───────────────────────────────────────────────── */
+.previewVideo {
+  display: none;
+}
+
+/* ─── Thumbnail tooltip ──────────────────────────────────────────────────── */
+.previewTooltip {
+  position: absolute;
+  /* Sits above the container; bottom 100% + a small gap */
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 20;
+  background-color: #000;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.previewCanvas {
+  display: block;
+  width: 160px;
+  height: 90px;
+}
+
+.previewTime {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* ─── Track background ───────────────────────────────────────────────────── */
+.progressBackground {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  /* Keep overflow:hidden for buffered / filled bars ONLY.
+     The scrub handle must live OUTSIDE this element. */
+  overflow: hidden;
+  transition: height 0.15s;
+  will-change: height;
+}
+
+/* Grow the track on hover for a "YouTube-style" feel */
+.progressContainer:hover .progressBackground {
+  height: 6px;
+}
+
+/* ─── Buffered range indicator ───────────────────────────────────────────── */
+.bufferedSegment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.45);
+  border-radius: 2px;
+}
+
+/* ─── Played progress fill ───────────────────────────────────────────────── */
+.progressFilled {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #3b82f6;
+  border-radius: 2px;
+  will-change: width;
+}
+
+/* ─── Hover position indicator (thin white line) ────────────────────────── */
+.hoverIndicator {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+/* ─── Scrub handle ───────────────────────────────────────────────────────── */
+/*
+ * The handle is a SIBLING of .progressBackground (outside overflow:hidden).
+ * It is positioned absolutely within .progressContainer, which provides
+ * the full padded height. `top: 50%` centers it on the container mid-line,
+ * which aligns with the track regardless of the container's padding.
+ *
+ * Fix: previously the handle was inside overflow:hidden and only a tiny
+ * sliver was visible on the 4px-tall track.
+ */
+.scrubHandle {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  transition: transform 0.12s, opacity 0.12s;
+  /* Hidden by default; shown on container hover */
+  opacity: 0;
+  z-index: 2;
+  will-change: transform, opacity;
+}
+
+.progressContainer:hover .scrubHandle,
+.scrubHandle.dragging {
+  opacity: 1;
+}
+
+.scrubHandle.dragging {
+  transform: translate(-50%, -50%) scale(1.25);
+  transition: none;
+}

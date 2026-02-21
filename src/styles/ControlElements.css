@@ -1,0 +1,184 @@
+/* ─── Control button base ────────────────────────────────────────────────── */
+.controlButton {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: opacity 0.15s, background-color 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.controlButton:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  opacity: 1;
+}
+
+.controlButton:active {
+  transform: scale(0.92);
+}
+
+.controlButton svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .controlButton {
+    padding: 8px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* ─── Volume control ─────────────────────────────────────────────────────── */
+.volumeContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.volumeSlider {
+  width: 80px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  height: 4px;
+  outline: none;
+  transition: width 0.15s;
+  flex-shrink: 0;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.volumeSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Time display ───────────────────────────────────────────────────────── */
+.timeDisplay {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  user-select: none;
+  white-space: nowrap;
+  padding: 0 4px;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Settings menu ──────────────────────────────────────────────────────── */
+.settingsContainer {
+  position: relative;
+}
+
+.settingsDropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background-color: rgba(15, 15, 15, 0.95);
+  border-radius: 6px;
+  padding: 6px;
+  min-width: 150px;
+  z-index: 30;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+/* Tabs (Speed / Quality) */
+.settingsTabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 4px;
+}
+
+.settingsTab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 0;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  text-transform: uppercase;
+}
+
+.settingsTab.active {
+  color: #fff;
+  border-bottom-color: #3b82f6;
+}
+
+.settingsTab:hover:not(.active) {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Panel section label */
+.settingsPanelLabel {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px 2px;
+}
+
+/* Option rows */
+.settingsOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: background-color 0.15s;
+}
+
+.settingsOption:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.settingsOption.active {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.settingsOptionBadge {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-left: 8px;
+  flex-shrink: 0;
+}
