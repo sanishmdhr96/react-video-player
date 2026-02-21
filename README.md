@@ -1,11 +1,11 @@
-# @sanishmdhr/react-video-player
+# react-helios
 
 Production-grade React video player with HLS streaming, adaptive quality selection, live stream support, subtitle tracks, thumbnail preview, Picture-in-Picture, and full keyboard control.
 
 ## Installation
 
 ```bash
-npm install @sanishmdhr/react-video-player
+npm install react-helios
 ```
 
 **Peer dependencies** — install if not already in your project:
@@ -17,8 +17,8 @@ npm install react react-dom
 ## Quick Start
 
 ```tsx
-import { VideoPlayer } from "@sanishmdhr/react-video-player";
-import "@sanishmdhr/react-video-player/styles";
+import { VideoPlayer } from "react-helios";
+import "react-helios/styles";
 
 export default function App() {
   return (
@@ -79,7 +79,7 @@ Use a `ref` to control the player programmatically:
 
 ```tsx
 import { useRef } from "react";
-import { VideoPlayer, VideoPlayerRef } from "@sanishmdhr/react-video-player";
+import { VideoPlayer, VideoPlayerRef } from "react-helios";
 
 export default function App() {
   const playerRef = useRef<VideoPlayerRef>(null);
@@ -165,7 +165,7 @@ import type {
   BufferedRange,
   VideoError,
   VideoErrorCode,
-} from "@sanishmdhr/react-video-player";
+} from "react-helios";
 ```
 
 ### `PlayerState`
