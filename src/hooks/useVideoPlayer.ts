@@ -67,11 +67,6 @@ export function useVideoPlayer(
     volume: options.muted ? 0 : 1,
   });
 
-  /**
-   * Always reflects the latest state without needing to be a dep.
-   * Lets getState() and keyboard handlers read current values without
-   * being recreated on every render.
-   */
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -150,11 +145,18 @@ export function useVideoPlayer(
               if (networkRetriesRef.current < MAX_RETRIES) {
                 networkRetriesRef.current += 1;
                 const delay = 1000 * networkRetriesRef.current;
-                console.warn(`[hls] network error – retry ${networkRetriesRef.current}/${MAX_RETRIES} in ${delay}ms`);
-                // Fix #10: guard against retry firing after this HLS instance was replaced/destroyed
-                setTimeout(() => { if (hlsRef.current === hls) hls.startLoad(); }, delay);
+                console.warn(
+                  `[hls] network error – retry ${networkRetriesRef.current}/${MAX_RETRIES} in ${delay}ms`,
+                );
+                // Guard against retry firing after this HLS instance was replaced/destroyed
+                setTimeout(() => {
+                  if (hlsRef.current === hls) hls.startLoad();
+                }, delay);
               } else {
-                const err: VideoError = { code: "HLS_NETWORK_ERROR", message: "Failed to load stream after multiple retries." };
+                const err: VideoError = {
+                  code: "HLS_NETWORK_ERROR",
+                  message: "Failed to load stream after multiple retries.",
+                };
                 setState((prev) => ({ ...prev, error: err }));
                 optionsRef.current.onError?.(err);
               }
@@ -166,7 +168,10 @@ export function useVideoPlayer(
             default: {
               hls.destroy();
               hlsRef.current = null;
-              const fatalErr: VideoError = { code: "HLS_FATAL_ERROR", message: "An unrecoverable HLS error occurred." };
+              const fatalErr: VideoError = {
+                code: "HLS_FATAL_ERROR",
+                message: "An unrecoverable HLS error occurred.",
+              };
               setState((prev) => ({ ...prev, error: fatalErr }));
               optionsRef.current.onError?.(fatalErr);
               break;
@@ -183,7 +188,6 @@ export function useVideoPlayer(
       if (opts.autoplay) video.play().catch(() => {});
     }
 
-    // Fix #11: cleanup always runs (was missing for HLS paths due to early return)
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
@@ -245,7 +249,10 @@ export function useVideoPlayer(
         3: "MEDIA_ERR_DECODE",
         4: "MEDIA_ERR_SRC_NOT_SUPPORTED",
       };
-      const err: VideoError = { code: codeMap[e.code] ?? "UNKNOWN", message: e.message || "Unknown media error" };
+      const err: VideoError = {
+        code: codeMap[e.code] ?? "UNKNOWN",
+        message: e.message || "Unknown media error",
+      };
       setState((prev) => ({ ...prev, error: err }));
       optionsRef.current.onError?.(err);
     };
@@ -257,20 +264,29 @@ export function useVideoPlayer(
       setState((prev) => ({ ...prev, isBuffering: false }));
       optionsRef.current.onBuffering?.(false);
     };
-    const handlePlaying = () => setState((prev) => ({ ...prev, isBuffering: false }));
+    const handlePlaying = () =>
+      setState((prev) => ({ ...prev, isBuffering: false }));
     const handleProgress = () => {
       const ranges: Array<{ start: number; end: number }> = [];
       for (let i = 0; i < video.buffered.length; i++) {
-        ranges.push({ start: video.buffered.start(i), end: video.buffered.end(i) });
+        ranges.push({
+          start: video.buffered.start(i),
+          end: video.buffered.end(i),
+        });
       }
       setState((prev) => ({ ...prev, bufferedRanges: ranges }));
     };
     const handleFullscreenChange = () => {
-      const fs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+      const fs = !!(
+        document.fullscreenElement || (document as any).webkitFullscreenElement
+      );
       setState((prev) => ({ ...prev, isFullscreen: fs }));
     };
     const handlePiPChange = () => {
-      setState((prev) => ({ ...prev, isPictureInPicture: document.pictureInPictureElement === video }));
+      setState((prev) => ({
+        ...prev,
+        isPictureInPicture: document.pictureInPictureElement === video,
+      }));
     };
 
     video.addEventListener("play", handlePlay);
@@ -304,7 +320,10 @@ export function useVideoPlayer(
       video.removeEventListener("playing", handlePlaying);
       video.removeEventListener("progress", handleProgress);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange,
+      );
       video.removeEventListener("enterpictureinpicture", handlePiPChange);
       video.removeEventListener("leavepictureinpicture", handlePiPChange);
     };
@@ -314,28 +333,38 @@ export function useVideoPlayer(
   const play = useCallback(async () => {
     const video = videoRef.current;
     if (!video) return;
-    try { await video.play(); }
-    catch (err: unknown) {
-      if (err instanceof Error && err.name !== "AbortError") console.error("[player] play() failed:", err);
+    try {
+      await video.play();
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== "AbortError")
+        console.error("[player] play() failed:", err);
     }
   }, [videoRef]);
 
-  const pause = useCallback(() => { videoRef.current?.pause(); }, [videoRef]);
-
-  const seek = useCallback((time: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.max(0, Math.min(time, video.duration || time));
+  const pause = useCallback(() => {
+    videoRef.current?.pause();
   }, [videoRef]);
 
-  const setVolume = useCallback((volume: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    const v = Math.max(0, Math.min(volume, 1));
-    if (v > 0) lastVolumeRef.current = v;
-    video.volume = v;
-    video.muted = v === 0;
-  }, [videoRef]);
+  const seek = useCallback(
+    (time: number) => {
+      const video = videoRef.current;
+      if (!video) return;
+      video.currentTime = Math.max(0, Math.min(time, video.duration || time));
+    },
+    [videoRef],
+  );
+
+  const setVolume = useCallback(
+    (volume: number) => {
+      const video = videoRef.current;
+      if (!video) return;
+      const v = Math.max(0, Math.min(volume, 1));
+      if (v > 0) lastVolumeRef.current = v;
+      video.volume = v;
+      video.muted = v === 0;
+    },
+    [videoRef],
+  );
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
@@ -350,10 +379,13 @@ export function useVideoPlayer(
     }
   }, [videoRef]);
 
-  const setPlaybackRate = useCallback((rate: PlaybackRate) => {
-    const video = videoRef.current;
-    if (video) video.playbackRate = rate;
-  }, [videoRef]);
+  const setPlaybackRate = useCallback(
+    (rate: PlaybackRate) => {
+      const video = videoRef.current;
+      if (video) video.playbackRate = rate;
+    },
+    [videoRef],
+  );
 
   const setQualityLevel = useCallback((level: number) => {
     const hls = hlsRef.current;
@@ -367,7 +399,8 @@ export function useVideoPlayer(
     const video = videoRef.current;
     if (!hls || !video) return;
     const livePos = hls.liveSyncPosition;
-    if (livePos != null && Number.isFinite(livePos)) video.currentTime = livePos;
+    if (livePos != null && Number.isFinite(livePos))
+      video.currentTime = livePos;
   }, [videoRef]);
 
   const toggleFullscreen = useCallback(async () => {
@@ -376,23 +409,31 @@ export function useVideoPlayer(
     const container = fullscreenContainerRef.current ?? video.parentElement;
     if (!container) return;
     try {
-      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+      if (
+        !document.fullscreenElement &&
+        !(document as any).webkitFullscreenElement
+      ) {
         if (container.requestFullscreen) await container.requestFullscreen();
         else (container as any).webkitRequestFullscreen?.();
       } else {
         if (document.exitFullscreen) await document.exitFullscreen();
         else (document as any).webkitExitFullscreen?.();
       }
-    } catch (err) { console.error("[player] fullscreen toggle failed:", err); }
+    } catch (err) {
+      console.error("[player] fullscreen toggle failed:", err);
+    }
   }, [videoRef]);
 
   const togglePictureInPicture = useCallback(async () => {
     const video = videoRef.current;
     if (!video) return;
     try {
-      if (document.pictureInPictureElement) await document.exitPictureInPicture();
+      if (document.pictureInPictureElement)
+        await document.exitPictureInPicture();
       else await video.requestPictureInPicture();
-    } catch (err) { console.error("[player] PiP toggle failed:", err); }
+    } catch (err) {
+      console.error("[player] PiP toggle failed:", err);
+    }
   }, [videoRef]);
 
   /**
@@ -400,37 +441,46 @@ export function useVideoPlayer(
    * This keeps it stable (same function reference) across all renders,
    * which in turn keeps the VideoPlayerRef object stable (via useMemo).
    */
-  const getState = useCallback((): PlayerState => ({ ...stateRef.current }), []);
+  const getState = useCallback(
+    (): PlayerState => ({ ...stateRef.current }),
+    [],
+  );
 
-  const getVideoElement = useCallback((): HTMLVideoElement | null => videoRef.current ?? null, [videoRef]);
+  const getVideoElement = useCallback(
+    (): HTMLVideoElement | null => videoRef.current ?? null,
+    [videoRef],
+  );
 
-  /**
-   * Wrap the ref object in useMemo so its identity is stable as long as
-   * the underlying callbacks don't change.  All callbacks use useCallback
-   * with stable deps (refs only), so this object is created exactly once
-   * after mount and never recreated during playback.
-   *
-   * Fix: previously a plain object literal was created on every render,
-   * causing useImperativeHandle to fire 60× per second.
-   */
-  const ref = useMemo<VideoPlayerRef>(() => ({
-    play,
-    pause,
-    seek,
-    setVolume,
-    toggleMute,
-    setPlaybackRate,
-    setQualityLevel,
-    seekToLive,
-    toggleFullscreen,
-    togglePictureInPicture,
-    getState,
-    getVideoElement,
-  }), [
-    play, pause, seek, setVolume, toggleMute, setPlaybackRate,
-    setQualityLevel, seekToLive, toggleFullscreen, togglePictureInPicture,
-    getState, getVideoElement,
-  ]);
+  const ref = useMemo<VideoPlayerRef>(
+    () => ({
+      play,
+      pause,
+      seek,
+      setVolume,
+      toggleMute,
+      setPlaybackRate,
+      setQualityLevel,
+      seekToLive,
+      toggleFullscreen,
+      togglePictureInPicture,
+      getState,
+      getVideoElement,
+    }),
+    [
+      play,
+      pause,
+      seek,
+      setVolume,
+      toggleMute,
+      setPlaybackRate,
+      setQualityLevel,
+      seekToLive,
+      toggleFullscreen,
+      togglePictureInPicture,
+      getState,
+      getVideoElement,
+    ],
+  );
 
   return { state, ref, hlsRef, fullscreenContainerRef };
 }
