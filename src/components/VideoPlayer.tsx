@@ -60,13 +60,12 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
     }, [fullscreenContainerRef]);
 
     /**
-     * playerRef is now stable (useMemo in useVideoPlayer), so
      * useImperativeHandle only fires once after mount – not 60× per second.
      */
     React.useImperativeHandle(forwardedRef, () => playerRef, [playerRef]);
 
     const handleVideoClick = useCallback(() => {
-      // Focus the container so keyboard shortcuts activate for this player (fix #8)
+      // Focus the container so keyboard shortcuts activate for this player
       containerRef.current?.focus();
       if (state.isPlaying) playerRef.pause();
       else playerRef.play();
@@ -132,7 +131,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             playerContainerRef={containerRef}
             playbackRates={playbackRates}
             enablePreview={enablePreview && !isHLSSrc}
-            // ── Flat state fields ──────────────────────────────────────────
             isPlaying={state.isPlaying}
             currentTime={state.currentTime}
             duration={state.duration}

@@ -11,13 +11,10 @@ import { ControlElements } from "./control-elements";
 
 interface ControlsProps {
   playerRef: VideoPlayerRef;
-  /** Ref to the outer player container; used to scope keyboard shortcuts to the focused player (fix #8) */
+  /** Ref to the outer player container; used to scope keyboard shortcuts to the focused player */
   playerContainerRef: React.RefObject<HTMLElement | null>;
   playbackRates: PlaybackRate[];
   enablePreview: boolean;
-  // ── Individual state fields ───────────────────────────────────────────────
-  // Allows React.memo on child components to skip re-renders when their
-  // specific field hasn't changed (e.g. VolumeControl skips on timeupdate).
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -65,8 +62,6 @@ export const Controls: React.FC<ControlsProps> = ({
    * The keyboard handler reads from this ref so the effect only needs
    * playerRef as a dependency – it NEVER re-registers on every timeupdate.
    *
-   * Fix: previously [playerRef, state] caused the global keydown listener
-   * to be removed and re-added ~60 times per second during playback.
    */
   const liveRef = useRef({
     isPlaying, currentTime, duration, volume, isMuted, isLive,
@@ -108,7 +103,7 @@ export const Controls: React.FC<ControlsProps> = ({
   // ─── Keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Fix #8: only handle keyboard events when this player container has focus,
+      // Only handle keyboard events when this player container has focus,
       // preventing shortcuts from firing on all players simultaneously.
       if (!playerContainerRef.current?.contains(document.activeElement)) return;
 
@@ -253,10 +248,10 @@ export const Controls: React.FC<ControlsProps> = ({
             onQualityChange={handleQualityChange}
           />
 
-          {/* PiP – memoized */}
+          {/* PiP  */}
           <ControlElements.PiPButton onClick={handlePiP} isPiP={isPictureInPicture} />
 
-          {/* Fullscreen – memoized */}
+          {/* Fullscreen  */}
           <ControlElements.FullscreenButton onClick={handleFullscreen} isFullscreen={isFullscreen} />
         </div>
       </div>
@@ -265,7 +260,7 @@ export const Controls: React.FC<ControlsProps> = ({
 };
 
 /**
- * Memoized GO LIVE button – only rendered for live streams.
+ * GO LIVE button – only rendered for live streams.
  * Stable onClick prop (useCallback in parent) prevents unnecessary re-renders.
  */
 const GoLiveButton = memo(({ onClick }: { onClick: () => void }) => (

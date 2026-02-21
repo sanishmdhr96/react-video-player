@@ -13,16 +13,6 @@ export interface ProgressBarProps {
   enablePreview?: boolean;
 }
 
-/**
- * ProgressBar re-renders on every timeupdate (currentTime changes).
- * Internal optimisations:
- *  - getBoundingClientRect cached in a ref, invalidated on resize (no layout
- *    thrash per mouse-move pixel)
- *  - Buffered segments memoized (only recalculate when bufferedRanges or
- *    duration change)
- *  - Preview RAF and fallback timeout share a single cancel path so the
- *    same frame isn't drawn twice
- */
 const ProgressBar: React.FC<ProgressBarProps> = memo(({
   playerRef,
   currentTime,
@@ -43,7 +33,6 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSeekTimeRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
-  // Fix #6: ref so the non-passive touchmove listener can read isDragging
   const isDraggingRef = useRef(false);
   isDraggingRef.current = isDragging;
 
@@ -93,17 +82,13 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
       previewVideo.removeEventListener("loadedmetadata", onReady);
       previewVideo.removeEventListener("loadeddata", onReady);
       previewVideo.removeEventListener("error", onErr);
-      // Fix #4: removeAttribute('src') avoids a spurious network request for ""
       previewVideo.removeAttribute("src");
       previewVideo.load();
       setPreviewLoaded(false);
     };
   }, [playerRef, enablePreview]);
 
-  // ─── Fix #6: non-passive touchmove to prevent scroll only while scrubbing ──
-  // React 17+ attaches root listeners as passive, so calling e.preventDefault()
-  // in onTouchMove has no effect. We register a non-passive native listener
-  // that calls preventDefault only when a drag is in progress.
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -133,7 +118,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     let drawn = false;
 
     const drawFrame = () => {
-      if (drawn) return; // Guard against both RAF and timeout firing
+      if (drawn) return;
       if (previewVideo.readyState >= 2) {
         drawn = true;
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -149,7 +134,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
 
     previewVideo.currentTime = time;
     previewVideo.addEventListener("seeked", drawFrame, { once: true });
-    // Fallback if seeked never fires
+
     updateTimeoutRef.current = setTimeout(() => {
       if (!drawn) drawFrame();
     }, 200);
@@ -158,7 +143,6 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   // ─── Geometry helpers (no layout thrash) ───────────────────────────────
   const getTimeFromClientX = useCallback((clientX: number): number => {
     const rect = getRect();
-    // Fix #9: guard against zero-width container (would produce NaN)
     if (!rect || rect.width === 0) return 0;
     const pos = Math.max(0, Math.min(clientX - rect.left, rect.width));
     return (pos / rect.width) * duration;
@@ -170,10 +154,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     return Math.max(0, Math.min(clientX - rect.left, rect.width));
   }, [getRect]);
 
-  // ─── Keyboard control (Fix #5) ──────────────────────────────────────────
-  // The slider has role="slider" and tabIndex={0}; ARIA requires keyboard
-  // navigation. stopImmediatePropagation prevents the Controls window-level
-  // handler from also firing for the same keypress.
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     switch (e.key) {
       case "ArrowLeft":
@@ -217,7 +198,6 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   }, [isDragging, enablePreview, previewLoaded, playerRef, updatePreview, getTimeFromClientX, getPxFromClientX]);
 
   const handleMouseEnter = useCallback(() => {
-    // Invalidate rect cache when re-entering (layout may have shifted)
     rectCacheRef.current = null;
     setShowPreview(true);
   }, []);
@@ -239,11 +219,9 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     if (!isDragging) playerRef.seek(getTimeFromClientX(e.clientX));
   }, [isDragging, getTimeFromClientX, playerRef]);
 
-  // Fix #6: removed e.preventDefault() from touchstart — page scroll must not
-  // be blocked on initial touch. Scroll is only prevented during an active drag
-  // via the non-passive touchmove listener registered above.
+
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    rectCacheRef.current = null; // Invalidate on touch start
+    rectCacheRef.current = null;
     setIsDragging(true);
     playerRef.seek(getTimeFromClientX(e.touches[0].clientX));
   }, [getTimeFromClientX, playerRef]);
@@ -255,7 +233,6 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
 
   const handleTouchEnd = useCallback(() => setIsDragging(false), []);
 
-  // Global mouseup so drag keeps working when cursor leaves the element
   useEffect(() => {
     const up = () => setIsDragging(false);
     window.addEventListener("mouseup", up);
@@ -272,10 +249,6 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  /**
-   * Memoize buffered segment nodes – only recalculated when bufferedRanges
-   * or duration actually change, not on every timeupdate tick.
-   */
   const bufferedSegments = useMemo(() => {
     if (duration <= 0) return null;
     return bufferedRanges.map((range, i) => {
@@ -335,11 +308,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
         )}
       </div>
 
-      {/*
-        Scrub handle sits OUTSIDE progressBackground's overflow:hidden.
-        Positioned relative to progressContainer (taller due to padding),
-        centering it on the track via top:50%.
-      */}
+
       <div
         className={`scrubHandle${isDragging ? " dragging" : ""}`}
         style={{ left: `${progress}%` }}
