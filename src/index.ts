@@ -17,6 +17,7 @@ export type {
   BufferedRange,
   VideoError,
   VideoErrorCode,
+  ContextMenuItem,
 } from "./lib/types";
 
 // Utilities

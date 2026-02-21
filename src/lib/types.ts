@@ -72,6 +72,11 @@ export interface VideoPlayerRef {
   getVideoElement: () => HTMLVideoElement | null;
 }
 
+export interface ContextMenuItem {
+  label: string;
+  onClick: () => void;
+}
+
 export interface VideoPlayerProps {
   src: string;
   poster?: string;
@@ -113,6 +118,7 @@ export interface VideoPlayerProps {
   onDurationChange?: (duration: number) => void;
   onBuffering?: (isBuffering: boolean) => void;
   onTheaterModeChange?: (isTheater: boolean) => void;
+  contextMenuItems?: ContextMenuItem[];
 }
 
 /** Internal error type used by the HLS module */

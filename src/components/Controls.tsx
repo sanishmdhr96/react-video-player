@@ -181,13 +181,14 @@ export const Controls: React.FC<ControlsProps> = ({
         justifyContent: "flex-end",
         opacity: showControls ? 1 : 0,
         transition: "opacity 0.3s",
-        pointerEvents: showControls ? "auto" : "none",
+        pointerEvents: "none",
       }}
     >
       <div
         style={{
           background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)",
           padding: "48px 12px 12px",
+          pointerEvents: showControls ? "auto" : "none",
         }}
         role="region"
         aria-label="Video player controls"

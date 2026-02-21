@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo, useEffect, useRef, useState, useCallback } from "react";
-import type { VideoPlayerRef } from "../lib/types";
+import type { ContextMenuItem, VideoPlayerRef } from "../lib/types";
 
 interface ContextMenuProps {
   x: number;
@@ -11,10 +11,11 @@ interface ContextMenuProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   playerRef: VideoPlayerRef;
   onClose: () => void;
+  contextMenuItems?: ContextMenuItem[];
 }
 
 export const ContextMenu = memo<ContextMenuProps>(
-  ({ x, y, isPlaying, src, videoRef, playerRef, onClose }) => {
+  ({ x, y, isPlaying, src, videoRef, playerRef, onClose, contextMenuItems }) => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [isLooping, setIsLooping] = useState(
       () => videoRef.current?.loop ?? false,
@@ -77,11 +78,6 @@ export const ContextMenu = memo<ContextMenuProps>(
       onClose();
     }, [playerRef, onClose]);
 
-    const handleFullscreen = useCallback(() => {
-      playerRef.toggleFullscreen();
-      onClose();
-    }, [playerRef, onClose]);
-
     return (
       <div
         ref={menuRef}
@@ -110,9 +106,21 @@ export const ContextMenu = memo<ContextMenuProps>(
         <button className="contextMenuItem" onClick={handlePiP}>
           Picture-in-Picture
         </button>
-        <button className="contextMenuItem" onClick={handleFullscreen}>
-          Fullscreen
-        </button>
+
+        {contextMenuItems && contextMenuItems.length > 0 && (
+          <>
+            <div className="contextMenuDivider" />
+            {contextMenuItems.map((item, i) => (
+              <button
+                key={i}
+                className="contextMenuItem"
+                onClick={() => { item.onClick(); onClose(); }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </>
+        )}
       </div>
     );
   },

@@ -109,6 +109,24 @@ To disable the preview entirely:
 | `onTimeUpdate` | `(time: number) => void` | — | Fired every ~250 ms during playback |
 | `onDurationChange` | `(duration: number) => void` | — | Fired when video duration becomes known |
 | `onBuffering` | `(isBuffering: boolean) => void` | — | Fired when buffering starts / stops |
+| `contextMenuItems` | `ContextMenuItem[]` | — | Extra items appended to the right-click context menu |
+
+## Context Menu
+
+Right-clicking the player shows a built-in menu (Play/Pause, Loop, Copy URL, Picture-in-Picture). You can append your own items by passing `contextMenuItems`:
+
+```tsx
+import { VideoPlayer, ContextMenuItem } from "react-helios";
+
+const items: ContextMenuItem[] = [
+  { label: "Add to Watchlist", onClick: () => addToWatchlist() },
+  { label: "Share", onClick: () => openShareDialog() },
+];
+
+<VideoPlayer src="..." contextMenuItems={items} />
+```
+
+Each item closes the menu automatically after its `onClick` is called.
 
 ## Imperative API (Ref)
 
@@ -203,6 +221,7 @@ import type {
   VideoError,
   VideoErrorCode,
   ThumbnailCue,
+  ContextMenuItem,
 } from "react-helios";
 
 // VTT utilities (useful for server-side pre-parsing or custom UIs)

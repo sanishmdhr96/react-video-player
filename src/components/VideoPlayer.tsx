@@ -32,6 +32,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       onDurationChange,
       onBuffering,
       onTheaterModeChange,
+      contextMenuItems,
     },
     forwardedRef,
   ) => {
@@ -155,6 +156,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             videoRef={videoRef}
             playerRef={playerRef}
             onClose={() => setContextMenu(null)}
+            contextMenuItems={contextMenuItems}
           />
         )}
 

@@ -20,6 +20,10 @@
   opacity: 1;
 }
 
+.controlButton:focus {
+  outline: none;
+}
+
 .controlButton:active {
   transform: scale(0.92);
 }
