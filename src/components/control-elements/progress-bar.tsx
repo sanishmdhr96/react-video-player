@@ -19,23 +19,23 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   enablePreview = true,
   thumbnailVtt,
 }) => {
-  const containerRef    = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const progressFilledRef = useRef<HTMLDivElement>(null);
-  const scrubHandleRef  = useRef<HTMLDivElement>(null);
-  const tooltipRef      = useRef<HTMLDivElement>(null);
+  const scrubHandleRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const hoverTimeTextRef = useRef<HTMLDivElement>(null);
   const hoverIndicatorRef = useRef<HTMLDivElement>(null);
-  const thumbRef        = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
 
   // Only bufferedRanges stays in React state — it changes on the `progress`
   // event which fires infrequently (every few seconds during buffering).
   const [bufferedRanges, setBufferedRanges] = useState<BufferedRange[]>([]);
 
   // Imperative state — no React re-renders for any of these
-  const isDraggingRef   = useRef(false);
-  const hoverPosRef     = useRef(0);
-  const hoverTimeRef    = useRef(0);
-  const lastCueRef      = useRef<ThumbnailCue | null>(null);
+  const isDraggingRef = useRef(false);
+  const hoverPosRef = useRef(0);
+  const hoverTimeRef = useRef(0);
+  const lastCueRef = useRef<ThumbnailCue | null>(null);
 
   // VTT thumbnail cues — loaded once, looked up synchronously
   const thumbnailCuesRef = useRef<ThumbnailCue[]>([]);
@@ -85,7 +85,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
 
     const updateProgress = () => {
       const dur = isFinite(video.duration) ? video.duration : 0;
-      const ct  = video.currentTime;
+      const ct = video.currentTime;
       const pct = dur > 0 ? (ct / dur) * 100 : 0;
 
       if (progressFilledRef.current)
@@ -93,21 +93,21 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
       if (scrubHandleRef.current)
         scrubHandleRef.current.style.left = `${pct}%`;
       if (containerRef.current) {
-        containerRef.current.setAttribute("aria-valuenow",  String(Math.round(ct)));
-        containerRef.current.setAttribute("aria-valuemax",  String(Math.round(dur)));
+        containerRef.current.setAttribute("aria-valuenow", String(Math.round(ct)));
+        containerRef.current.setAttribute("aria-valuemax", String(Math.round(dur)));
         containerRef.current.setAttribute("aria-valuetext", formatTime(ct));
       }
     };
 
-    video.addEventListener("timeupdate",     updateProgress);
+    video.addEventListener("timeupdate", updateProgress);
     video.addEventListener("durationchange", updateProgress);
-    video.addEventListener("seeked",         updateProgress);
+    video.addEventListener("seeked", updateProgress);
     updateProgress(); // sync on mount
 
     return () => {
-      video.removeEventListener("timeupdate",     updateProgress);
+      video.removeEventListener("timeupdate", updateProgress);
       video.removeEventListener("durationchange", updateProgress);
-      video.removeEventListener("seeked",         updateProgress);
+      video.removeEventListener("seeked", updateProgress);
     };
   }, [videoRef]);
 
@@ -143,13 +143,13 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   const showTooltip = useCallback(() => {
     if (!enablePreview) return;
     rectCacheRef.current = null; // invalidate rect on re-entry
-    if (tooltipRef.current)       tooltipRef.current.style.display       = "";
-    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.display = "";
+    if (tooltipRef.current) tooltipRef.current.style.display = "block";
+    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.display = "block";
   }, [enablePreview]);
 
   const hideTooltip = useCallback(() => {
-    if (tooltipRef.current)        tooltipRef.current.style.display        = "none";
-    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.display  = "none";
+    if (tooltipRef.current) tooltipRef.current.style.display = "none";
+    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.display = "none";
   }, []);
 
   // ─── Apply thumbnail from VTT cue ────────────────────────────────────────
@@ -159,16 +159,16 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     lastCueRef.current = cue;
     if (!cue) return;
     const el = thumbRef.current;
-    el.style.backgroundImage    = `url(${cue.url})`;
+    el.style.backgroundImage = `url(${cue.url})`;
     el.style.backgroundPosition = `-${cue.x}px -${cue.y}px`;
-    el.style.width              = `${cue.w}px`;
-    el.style.height             = `${cue.h}px`;
+    el.style.width = `${cue.w}px`;
+    el.style.height = `${cue.h}px`;
   }, []);
 
   // ─── Geometry helpers ────────────────────────────────────────────────────
   const getTimeFromClientX = useCallback((clientX: number): number => {
     const rect = getRect();
-    const dur  = videoRef.current?.duration;
+    const dur = videoRef.current?.duration;
     if (!rect || rect.width === 0 || !dur || !isFinite(dur)) return 0;
     const pos = Math.max(0, Math.min(clientX - rect.left, rect.width));
     return (pos / rect.width) * dur;
@@ -184,7 +184,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     const video = videoRef.current;
     if (!video) return;
-    const ct  = video.currentTime;
+    const ct = video.currentTime;
     const dur = isFinite(video.duration) ? video.duration : 0;
 
     switch (e.key) {
@@ -216,20 +216,27 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   // ─── Mouse handlers ───────────────────────────────────────────────────────
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const time = getTimeFromClientX(e.clientX);
-    const px   = getPxFromClientX(e.clientX);
+    const px = getPxFromClientX(e.clientX);
 
-    hoverPosRef.current  = px;
+    hoverPosRef.current = px;
     hoverTimeRef.current = time;
 
-    // Update tooltip position and time text imperatively
-    if (tooltipRef.current)        tooltipRef.current.style.left        = `${px}px`;
-    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.left  = `${px}px`;
-    if (hoverTimeTextRef.current)  hoverTimeTextRef.current.textContent  = formatTime(time);
+    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.left = `${px}px`;
+    if (hoverTimeTextRef.current) hoverTimeTextRef.current.textContent = formatTime(time);
+
 
     applyThumbnail(time);
 
+    if (tooltipRef.current) {
+      const tooltipWidth = tooltipRef.current.offsetWidth;
+      const containerWidth = getRect()?.width ?? 0;
+      const halfWidth = tooltipWidth / 2;
+      const clampedLeft = Math.max(halfWidth, Math.min(px, containerWidth - halfWidth));
+      tooltipRef.current.style.left = `${clampedLeft}px`;
+    }
+
     if (isDraggingRef.current) playerRef.seek(time);
-  }, [playerRef, applyThumbnail, getTimeFromClientX, getPxFromClientX]);
+  }, [playerRef, applyThumbnail, getTimeFromClientX, getPxFromClientX, getRect]);
 
   const handleMouseEnter = useCallback(() => {
     showTooltip();
@@ -286,7 +293,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   // ─── Buffered segments (memoised — only re-renders on progress event) ────
   const bufferedSegments = useMemo(() => {
     const video = videoRef.current;
-    const dur   = video && isFinite(video.duration) ? video.duration : 0;
+    const dur = video && isFinite(video.duration) ? video.duration : 0;
     if (dur <= 0 || !bufferedRanges.length) return null;
     return bufferedRanges.map((range, i) => {
       const start = (range.start / dur) * 100;

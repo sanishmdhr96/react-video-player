@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Play, Pause, SkipForward, Volume2, Maximize, PictureInPicture, Zap, Smartphone, Code, Shield } from "lucide-react";
-import { VideoPlayer } from "@sanishmdhr/react-video-player";
+import {
+  Play, Pause, SkipForward, Volume2, Maximize, PictureInPicture,
+  Zap, Smartphone, Radio, Subtitles, Layers, MonitorPlay,
+} from "lucide-react";
+import { VideoPlayer } from "react-helios";
+import type { VideoError, VideoPlayerRef } from "react-helios";
+import "react-helios/styles";
 
 export default function DemoPage() {
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<VideoPlayerRef>(null);
   const [activeTab, setActiveTab] = useState("demo");
-
-  const handleControl = (action: string) => {
-    playerRef.current?.[action as keyof typeof playerRef.current]?.();
-
-  };
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
@@ -19,21 +19,31 @@ export default function DemoPage() {
       <header style={{ padding: "40px 24px", textAlign: "center", color: "white" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ display: "inline-block", padding: "8px 20px", backgroundColor: "rgba(255,255,255,0.2)", borderRadius: "50px", fontSize: "14px", fontWeight: "600", marginBottom: "20px", backdropFilter: "blur(10px)" }}>
-            @sanishmdhr/react-video-player
+            react-helios
           </div>
           <h1 style={{ fontSize: "56px", fontWeight: "800", margin: "0 0 20px 0", letterSpacing: "-1px" }}>
             Production-Ready<br />Video Player
           </h1>
           <p style={{ fontSize: "20px", opacity: 0.95, maxWidth: "600px", margin: "0 auto 32px", lineHeight: "1.6" }}>
-            A beautiful, accessible, and feature-rich video player for React. Built with TypeScript, optimized for performance.
+            HLS streaming, adaptive quality, live streams, VTT sprite thumbnails, subtitles, theater mode — zero re-renders during playback.
           </p>
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-            <button style={{ padding: "14px 32px", backgroundColor: "white", color: "#667eea", border: "none", borderRadius: "10px", fontSize: "16px", fontWeight: "600", cursor: "pointer", boxShadow: "0 4px 15px rgba(0,0,0,0.2)" }}>
+            <a
+              href="https://www.npmjs.com/package/react-helios"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ padding: "14px 32px", backgroundColor: "white", color: "#667eea", border: "none", borderRadius: "10px", fontSize: "16px", fontWeight: "600", cursor: "pointer", boxShadow: "0 4px 15px rgba(0,0,0,0.2)", textDecoration: "none" }}
+            >
               Get Started
-            </button>
-            <button style={{ padding: "14px 32px", backgroundColor: "rgba(255,255,255,0.2)", color: "white", border: "2px solid white", borderRadius: "10px", fontSize: "16px", fontWeight: "600", cursor: "pointer", backdropFilter: "blur(10px)" }}>
+            </a>
+            <a
+              href="https://github.com/sanishmdhr96/react-video-player"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ padding: "14px 32px", backgroundColor: "rgba(255,255,255,0.2)", color: "white", border: "2px solid white", borderRadius: "10px", fontSize: "16px", fontWeight: "600", cursor: "pointer", backdropFilter: "blur(10px)", textDecoration: "none" }}
+            >
               View on GitHub
-            </button>
+            </a>
           </div>
         </div>
       </header>
@@ -57,7 +67,7 @@ export default function DemoPage() {
                   fontSize: "16px",
                   fontWeight: "600",
                   textTransform: "capitalize",
-                  marginBottom: "-2px"
+                  marginBottom: "-2px",
                 }}
               >
                 {tab}
@@ -70,13 +80,14 @@ export default function DemoPage() {
               <div style={{ aspectRatio: "16 / 9", width: "100%", marginBottom: "32px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", borderRadius: "12px", overflow: "hidden" }}>
                 <VideoPlayer
                   ref={playerRef}
-                  src="https://cimex.com.np/sealion-phone.mp4"
+                  src="https://luniba.com/high_quality_video/index.m3u8"
+                  thumbnailVtt="https://luniba.com/high_quality_video/thumbnails/thumbnails.vtt"
                   controls
                   autoplay={false}
                   playbackRates={[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]}
                   enablePreview={true}
                   enableHLS={true}
-                  onError={(error) => console.error("Video error:", error)}
+                  onError={(err: VideoError) => console.error("Video error:", err)}
                 />
               </div>
 
@@ -86,17 +97,18 @@ export default function DemoPage() {
                 </h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px" }}>
                   {[
-                    { icon: Play, label: "Play", action: "play" },
-                    { icon: Pause, label: "Pause", action: "pause" },
-                    { icon: SkipForward, label: "Jump 30s", action: "seek(30)" },
-                    { icon: Volume2, label: "50% Vol", action: "setVolume(0.5)" },
-                    { icon: Zap, label: "1.5x Speed", action: "setPlaybackRate(1.5)" },
-                    { icon: Maximize, label: "Fullscreen", action: "toggleFullscreen" },
-                    { icon: PictureInPicture, label: "PiP", action: "togglePictureInPicture" }
+                    { icon: Play,             label: "Play",          action: () => playerRef.current?.play() },
+                    { icon: Pause,            label: "Pause",         action: () => playerRef.current?.pause() },
+                    { icon: SkipForward,      label: "Jump 30s",      action: () => playerRef.current?.seek(30) },
+                    { icon: Volume2,          label: "50% Vol",       action: () => playerRef.current?.setVolume(0.5) },
+                    { icon: Zap,              label: "1.5× Speed",    action: () => playerRef.current?.setPlaybackRate(1.5) },
+                    { icon: Maximize,         label: "Fullscreen",    action: () => playerRef.current?.toggleFullscreen() },
+                    { icon: PictureInPicture, label: "PiP",           action: () => playerRef.current?.togglePictureInPicture() },
+                    { icon: MonitorPlay,      label: "Theater",       action: () => playerRef.current?.toggleTheaterMode() },
                   ].map(({ icon: Icon, label, action }) => (
                     <button
-                      key={action}
-                      onClick={() => handleControl(action)}
+                      key={label}
+                      onClick={action}
                       style={{
                         padding: "16px",
                         backgroundColor: "#f8f9fa",
@@ -110,7 +122,7 @@ export default function DemoPage() {
                         flexDirection: "column",
                         alignItems: "center",
                         gap: "8px",
-                        transition: "all 0.2s"
+                        transition: "all 0.2s",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = "#667eea";
@@ -137,12 +149,12 @@ export default function DemoPage() {
           {activeTab === "features" && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px" }}>
               {[
-                { icon: Code, title: "HTML5 Native", desc: "MP4, WebM, Ogg with automatic codec detection", color: "#667eea" },
-                { icon: Smartphone, title: "Responsive", desc: "Mobile-first controls for all devices", color: "#764ba2" },
-                { icon: Shield, title: "Accessible", desc: "ARIA labels, keyboard shortcuts, screen readers", color: "#f093fb" },
-                { icon: Zap, title: "Performance", desc: "Optimized rendering with lazy loading", color: "#4facfe" },
-                { icon: Play, title: "Custom Controls", desc: "Full control API with ref methods", color: "#43e97b" },
-                { icon: PictureInPicture, title: "Modern APIs", desc: "Fullscreen, PiP, playback rates", color: "#fa709a" }
+                { icon: Radio,      title: "HLS Streaming",      desc: "Adaptive bitrate via HLS.js. Auto quality selection with manual override. Native HLS on Safari.", color: "#667eea" },
+                { icon: Layers,     title: "VTT Thumbnails",     desc: "Sprite-sheet preview on progress bar hover, edge-clamped like YouTube. Zero extra network requests per hover.", color: "#764ba2" },
+                { icon: MonitorPlay,title: "Theater Mode",       desc: "Wide-layout theater mode toggle. Fires onTheaterModeChange for layout integration.", color: "#f093fb" },
+                { icon: Radio,      title: "Live Streams",       desc: "Infinite-duration detection, LIVE badge, GO LIVE button, and L key shortcut to seek to the live edge.", color: "#4facfe" },
+                { icon: Subtitles,  title: "Subtitles",          desc: "Multiple WebVTT subtitle tracks with language selection built into the settings menu.", color: "#43e97b" },
+                { icon: Smartphone, title: "Zero Re-renders",    desc: "timeupdate and progress events handled via direct DOM mutation. React state only changes on play/pause/volume.", color: "#fa709a" },
               ].map(({ icon: Icon, title, desc, color }) => (
                 <div
                   key={title}
@@ -151,7 +163,7 @@ export default function DemoPage() {
                     borderRadius: "16px",
                     background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)",
                     border: "2px solid #e9ecef",
-                    transition: "all 0.3s"
+                    transition: "all 0.3s",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = color;
@@ -175,50 +187,70 @@ export default function DemoPage() {
           )}
 
           {activeTab === "shortcuts" && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
-              {[
-                { key: "Space / K", action: "Play / Pause" },
-                { key: "← →", action: "Seek ±5 seconds" },
-                { key: "↑ ↓", action: "Volume ±10%" },
-                { key: "M", action: "Mute / Unmute (restores volume)" },
-                { key: "F", action: "Toggle Fullscreen" },
-                { key: "P", action: "Picture-in-Picture" },
-                { key: "L", action: "Seek to Live edge (live streams)" },
-                { key: "0-9", action: "Jump to 0–90%" }
-              ].map(({ key, action }) => (
-                <div key={key} style={{ padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "12px", border: "2px solid #e9ecef" }}>
-                  <div style={{
-                    display: "inline-block",
-                    padding: "8px 16px",
-                    backgroundColor: "white",
-                    border: "2px solid #667eea",
-                    borderRadius: "8px",
-                    fontFamily: "monospace",
-                    fontWeight: "700",
-                    fontSize: "16px",
-                    color: "#667eea",
-                    marginBottom: "12px"
-                  }}>
-                    {key}
+            <>
+              <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#333", marginBottom: "16px" }}>Player focus</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", marginBottom: "32px" }}>
+                {[
+                  { key: "Space / K", action: "Play / Pause" },
+                  { key: "← →",       action: "Seek ±5 seconds" },
+                  { key: "↑ ↓",       action: "Volume ±10%" },
+                  { key: "M",          action: "Mute / Unmute (restores volume)" },
+                  { key: "F",          action: "Toggle Fullscreen" },
+                  { key: "T",          action: "Toggle Theater mode" },
+                  { key: "P",          action: "Toggle Picture-in-Picture" },
+                  { key: "L",          action: "Seek to live edge (live streams)" },
+                  { key: "0 – 9",      action: "Jump to 0 – 90% of duration" },
+                ].map(({ key, action }) => (
+                  <div key={key} style={{ padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "12px", border: "2px solid #e9ecef" }}>
+                    <div style={{ display: "inline-block", padding: "8px 16px", backgroundColor: "white", border: "2px solid #667eea", borderRadius: "8px", fontFamily: "monospace", fontWeight: "700", fontSize: "14px", color: "#667eea", marginBottom: "12px" }}>
+                      {key}
+                    </div>
+                    <div style={{ fontSize: "14px", color: "#666", fontWeight: "500" }}>{action}</div>
                   </div>
-                  <div style={{ fontSize: "14px", color: "#666", fontWeight: "500" }}>{action}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+
+              <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#333", marginBottom: "16px" }}>Progress bar focus</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+                {[
+                  { key: "← →",             action: "Seek ±5 seconds" },
+                  { key: "Shift + ← →",     action: "Seek ±10 seconds" },
+                  { key: "Home",             action: "Jump to start" },
+                  { key: "End",              action: "Jump to end" },
+                ].map(({ key, action }) => (
+                  <div key={key} style={{ padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "12px", border: "2px solid #e9ecef" }}>
+                    <div style={{ display: "inline-block", padding: "8px 16px", backgroundColor: "white", border: "2px solid #764ba2", borderRadius: "8px", fontFamily: "monospace", fontWeight: "700", fontSize: "14px", color: "#764ba2", marginBottom: "12px" }}>
+                      {key}
+                    </div>
+                    <div style={{ fontSize: "14px", color: "#666", fontWeight: "500" }}>{action}</div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </section>
 
-        {/* Installation */}
+        {/* Quick Start */}
         <section style={{ backgroundColor: "rgba(255,255,255,0.95)", borderRadius: "20px", padding: "40px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
           <h2 style={{ fontSize: "32px", fontWeight: "800", marginBottom: "24px", color: "#333" }}>Quick Start</h2>
           <div style={{ backgroundColor: "#1e1e1e", color: "#d4d4d4", padding: "24px", borderRadius: "12px", fontFamily: "monospace", fontSize: "14px", marginBottom: "20px", overflowX: "auto" }}>
-            <div style={{ color: "#6a9955" }}>// Install</div>
-            <div style={{ marginBottom: "16px" }}>npm install @sanishmdhr/react-video-player</div>
-            <div style={{ color: "#6a9955" }}>// Import and use</div>
-            <div><span style={{ color: "#c586c0" }}>import</span> {'{ VideoPlayer }'} <span style={{ color: "#c586c0" }}>from</span> <span style={{ color: "#ce9178" }}>"@sanishmdhr/react-video-player"</span>;</div>
+            <div style={{ color: "#6a9955", marginBottom: "4px" }}>// Install</div>
+            <div style={{ marginBottom: "20px" }}>npm install react-helios</div>
+
+            <div style={{ color: "#6a9955", marginBottom: "4px" }}>// Import</div>
+            <div><span style={{ color: "#c586c0" }}>import</span>{" "}{"{ VideoPlayer }"}{" "}<span style={{ color: "#c586c0" }}>from</span>{" "}<span style={{ color: "#ce9178" }}>"react-helios"</span>;</div>
+            <div style={{ marginBottom: "20px" }}><span style={{ color: "#c586c0" }}>import</span>{" "}<span style={{ color: "#ce9178" }}>"react-helios/styles"</span>;</div>
+
+            <div style={{ color: "#6a9955", marginBottom: "4px" }}>// Use</div>
+            <div>{"<"}<span style={{ color: "#4ec9b0" }}>VideoPlayer</span></div>
+            <div style={{ paddingLeft: "16px" }}><span style={{ color: "#9cdcfe" }}>src</span>=<span style={{ color: "#ce9178" }}>"https://example.com/stream.m3u8"</span></div>
+            <div style={{ paddingLeft: "16px" }}><span style={{ color: "#9cdcfe" }}>thumbnailVtt</span>=<span style={{ color: "#ce9178" }}>"https://example.com/thumbs/storyboard.vtt"</span></div>
+            <div style={{ paddingLeft: "16px" }}><span style={{ color: "#9cdcfe" }}>controls</span></div>
+            <div>{"/"}{">"}
+            </div>
           </div>
           <p style={{ fontSize: "16px", color: "#666", lineHeight: "1.6" }}>
-            Get started in seconds with a fully-featured video player. TypeScript types included, works with Next.js and plain React.
+            Works with Next.js and plain React. TypeScript types included. HLS.js is bundled — no extra install needed.
           </p>
         </section>
       </main>
