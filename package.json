@@ -1,6 +1,6 @@
 {
   "name": "react-helios",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Production-grade React video player with HLS, quality selection, live streams, subtitles, and thumbnail preview",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
