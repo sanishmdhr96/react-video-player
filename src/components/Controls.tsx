@@ -11,6 +11,8 @@ import { ControlElements } from "./control-elements";
 
 interface ControlsProps {
   playerRef: VideoPlayerRef;
+  /** Ref to the outer player container; used to scope keyboard shortcuts to the focused player (fix #8) */
+  playerContainerRef: React.RefObject<HTMLElement | null>;
   playbackRates: PlaybackRate[];
   enablePreview: boolean;
   // ── Individual state fields ───────────────────────────────────────────────
@@ -38,6 +40,7 @@ interface ControlsProps {
  */
 export const Controls: React.FC<ControlsProps> = ({
   playerRef,
+  playerContainerRef,
   playbackRates,
   enablePreview,
   isPlaying,
@@ -105,6 +108,10 @@ export const Controls: React.FC<ControlsProps> = ({
   // ─── Keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Fix #8: only handle keyboard events when this player container has focus,
+      // preventing shortcuts from firing on all players simultaneously.
+      if (!playerContainerRef.current?.contains(document.activeElement)) return;
+
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
 
@@ -160,7 +167,7 @@ export const Controls: React.FC<ControlsProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playerRef]); // ← only playerRef; state is read via liveRef
+  }, [playerRef, playerContainerRef]); // ← state read via liveRef; container ref for focus check
 
   // ─── Stable callbacks for child components ───────────────────────────────
   // These are memoized so child React.memo components don't re-render due

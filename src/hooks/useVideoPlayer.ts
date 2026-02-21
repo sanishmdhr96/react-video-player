@@ -8,6 +8,7 @@ import type {
   PlaybackRate,
   HLSQualityLevel,
   VideoError,
+  VideoErrorCode,
 } from "../lib/types";
 import type { HlsConfig } from "hls.js";
 import { isHLSUrl } from "../lib/format";
@@ -102,14 +103,11 @@ export function useVideoPlayer(
 
     if (opts.enableHLS !== false && isHLSUrl(src)) {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        // Native HLS (Safari)
+        // Native HLS (Safari) – no HLS.js instance needed
         video.src = src;
         video.load();
         if (opts.autoplay) video.play().catch(() => {});
-        return;
-      }
-
-      if (HLS.isSupported()) {
+      } else if (HLS.isSupported()) {
         const hls = new HLS({
           autoStartLoad: true,
           startLevel: -1,
@@ -153,7 +151,8 @@ export function useVideoPlayer(
                 networkRetriesRef.current += 1;
                 const delay = 1000 * networkRetriesRef.current;
                 console.warn(`[hls] network error – retry ${networkRetriesRef.current}/${MAX_RETRIES} in ${delay}ms`);
-                setTimeout(() => hls.startLoad(), delay);
+                // Fix #10: guard against retry firing after this HLS instance was replaced/destroyed
+                setTimeout(() => { if (hlsRef.current === hls) hls.startLoad(); }, delay);
               } else {
                 const err: VideoError = { code: "HLS_NETWORK_ERROR", message: "Failed to load stream after multiple retries." };
                 setState((prev) => ({ ...prev, error: err }));
@@ -164,25 +163,27 @@ export function useVideoPlayer(
               console.warn("[hls] media error – recovering");
               hls.recoverMediaError();
               break;
-            default:
+            default: {
               hls.destroy();
               hlsRef.current = null;
               const fatalErr: VideoError = { code: "HLS_FATAL_ERROR", message: "An unrecoverable HLS error occurred." };
               setState((prev) => ({ ...prev, error: fatalErr }));
               optionsRef.current.onError?.(fatalErr);
+              break;
+            }
           }
         });
 
         hlsRef.current = hls;
-        return;
       }
+    } else {
+      // Regular video (mp4, webm, etc.)
+      video.src = src;
+      video.load();
+      if (opts.autoplay) video.play().catch(() => {});
     }
 
-    // Regular video (mp4, webm, etc.)
-    video.src = src;
-    video.load();
-    if (opts.autoplay) video.play().catch(() => {});
-
+    // Fix #11: cleanup always runs (was missing for HLS paths due to early return)
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
@@ -238,7 +239,7 @@ export function useVideoPlayer(
     const handleError = () => {
       const e = video.error;
       if (!e) return;
-      const codeMap: Record<number, VideoError["code"]> = {
+      const codeMap: Partial<Record<number, VideoErrorCode>> = {
         1: "MEDIA_ERR_ABORTED",
         2: "MEDIA_ERR_NETWORK",
         3: "MEDIA_ERR_DECODE",
