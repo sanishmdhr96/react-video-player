@@ -109,7 +109,53 @@ To disable the preview entirely:
 | `onTimeUpdate` | `(time: number) => void` | — | Fired every ~250 ms during playback |
 | `onDurationChange` | `(duration: number) => void` | — | Fired when video duration becomes known |
 | `onBuffering` | `(isBuffering: boolean) => void` | — | Fired when buffering starts / stops |
+| `onTheaterModeChange` | `(isTheater: boolean) => void` | — | Fired when theater mode is toggled |
 | `contextMenuItems` | `ContextMenuItem[]` | — | Extra items appended to the right-click context menu |
+| `controlBarItems` | `ControlBarItem[]` | — | Extra icon buttons appended to the right side of the control bar |
+
+## Quality Selection
+
+For HLS streams (`.m3u8`) the player automatically parses the available quality levels from the manifest. Once levels are available, the **Settings (⚙)** button in the control bar grows a **Speed / Quality** tab bar:
+
+- **Speed tab** — always visible, lets you change playback rate.
+- **Quality tab** — appears only for HLS streams. Lists all levels sorted by bitrate (e.g. 1080p, 720p, 480p) plus an **Auto** option that enables ABR (adaptive bitrate). The current auto-selected level is shown in parentheses next to "Auto".
+
+For plain MP4/WebM files there are no quality levels to switch between, so the Quality tab never appears.
+
+You can also switch quality programmatically via the ref:
+
+```tsx
+playerRef.current?.setQualityLevel(0);   // pin to highest level
+playerRef.current?.setQualityLevel(-1);  // back to ABR auto
+```
+
+## Custom Control Bar Buttons
+
+Inject your own icon buttons into the right side of the control bar (between the settings gear and the PiP/Theater/Fullscreen buttons) using `controlBarItems`:
+
+```tsx
+import { VideoPlayer, ControlBarItem } from "react-helios";
+
+const items: ControlBarItem[] = [
+  {
+    key: "download",
+    label: "Download",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5v-2z"/></svg>,
+    onClick: () => downloadVideo(),
+  },
+  {
+    key: "share",
+    label: "Share",
+    title: "Share this video",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 0 0 18 8a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 6 9a3 3 0 1 0 3 3c0-.24-.04-.47-.09-.7l7.05-4.11c.52.47 1.2.77 1.96.77a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>,
+    onClick: () => openShareDialog(),
+  },
+];
+
+<VideoPlayer src="..." controlBarItems={items} />
+```
+
+Buttons receive the same `controlButton` CSS class as built-in buttons (hover highlight, active press scale, no focus outline).
 
 ## Context Menu
 
@@ -166,6 +212,7 @@ export default function App() {
 | `seekToLive` | `() => void` | Jump to the live edge (HLS live streams) |
 | `toggleFullscreen` | `() => Promise<void>` | Toggle fullscreen |
 | `togglePictureInPicture` | `() => Promise<void>` | Toggle Picture-in-Picture |
+| `toggleTheaterMode` | `() => void` | Toggle theater (wide) mode |
 | `getState` | `() => PlayerState` | Snapshot of current player state |
 | `getVideoElement` | `() => HTMLVideoElement \| null` | Access the underlying `<video>` element |
 
@@ -192,6 +239,7 @@ Shortcuts activate when the player has focus (click the player or tab to it).
 | `↑` / `↓` | Volume +10% / −10% |
 | `M` | Toggle mute (restores previous volume) |
 | `F` | Toggle fullscreen |
+| `T` | Toggle theater mode |
 | `P` | Toggle Picture-in-Picture |
 | `L` | Seek to live edge (live streams only) |
 | `0`–`9` | Jump to 0%–90% of duration |
@@ -222,6 +270,7 @@ import type {
   VideoErrorCode,
   ThumbnailCue,
   ContextMenuItem,
+  ControlBarItem,
 } from "react-helios";
 
 // VTT utilities (useful for server-side pre-parsing or custom UIs)
@@ -243,6 +292,7 @@ interface PlayerState {
   error: VideoError | null;
   isFullscreen: boolean;
   isPictureInPicture: boolean;
+  isTheaterMode: boolean;
   isLive: boolean;
   qualityLevels: HLSQualityLevel[];
   currentQualityLevel: number; // -1 = ABR auto
@@ -278,6 +328,27 @@ interface ThumbnailCue {
   y: number;
   w: number;     // cell width in pixels
   h: number;     // cell height in pixels
+}
+```
+
+### `ControlBarItem`
+
+```ts
+interface ControlBarItem {
+  key: string;       // React reconciliation key
+  icon: ReactNode;   // SVG, img, or any React node
+  label: string;     // aria-label
+  title?: string;    // tooltip (falls back to label)
+  onClick: () => void;
+}
+```
+
+### `ContextMenuItem`
+
+```ts
+interface ContextMenuItem {
+  label: string;
+  onClick: () => void;
 }
 ```
 

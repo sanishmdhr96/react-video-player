@@ -5,6 +5,7 @@ import type {
   PlaybackRate,
   VideoPlayerRef,
   HLSQualityLevel,
+  ControlBarItem,
 } from "../lib/types";
 import { ControlElements } from "./control-elements";
 
@@ -25,6 +26,7 @@ interface ControlsProps {
   isLive: boolean;
   qualityLevels: HLSQualityLevel[];
   currentQualityLevel: number;
+  controlBarItems?: ControlBarItem[];
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -44,8 +46,8 @@ export const Controls: React.FC<ControlsProps> = ({
   isLive,
   qualityLevels,
   currentQualityLevel,
+  controlBarItems,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showControls, setShowControls] = useState(true);
 
@@ -72,10 +74,13 @@ export const Controls: React.FC<ControlsProps> = ({
       hideTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
     };
 
-    const el = containerRef.current;
+    const el = playerContainerRef.current;
     if (el) {
       el.addEventListener("mousemove", reset);
       el.addEventListener("mouseenter", reset);
+      el.addEventListener("mouseleave", () => {
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      });
       el.addEventListener("touchstart", reset, { passive: true });
     }
     reset();
@@ -84,11 +89,12 @@ export const Controls: React.FC<ControlsProps> = ({
       if (el) {
         el.removeEventListener("mousemove", reset);
         el.removeEventListener("mouseenter", reset);
+        el.removeEventListener("mouseleave", () => { });
         el.removeEventListener("touchstart", reset);
       }
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
-  }, [isPlaying]);
+  }, [isPlaying, playerContainerRef]);
 
   // ─── Keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
@@ -172,7 +178,6 @@ export const Controls: React.FC<ControlsProps> = ({
 
   return (
     <div
-      ref={containerRef}
       style={{
         position: "absolute",
         inset: 0,
@@ -227,6 +232,7 @@ export const Controls: React.FC<ControlsProps> = ({
             <GoLiveButton onClick={handleSeekToLive} />
           )}
 
+          {/* Settings — speed always shown; quality tab appears for HLS streams */}
           <ControlElements.SettingsMenu
             currentRate={playbackRate}
             playbackRates={playbackRates}
@@ -235,6 +241,19 @@ export const Controls: React.FC<ControlsProps> = ({
             currentQualityLevel={currentQualityLevel}
             onQualityChange={handleQualityChange}
           />
+
+          {/* Custom control bar items injected by the consumer */}
+          {controlBarItems?.map((item) => (
+            <button
+              key={item.key}
+              className="controlButton"
+              aria-label={item.label}
+              title={item.title ?? item.label}
+              onClick={item.onClick}
+            >
+              {item.icon}
+            </button>
+          ))}
 
           <ControlElements.PiPButton onClick={handlePiP} isPiP={isPictureInPicture} />
           <ControlElements.TheaterButton onClick={handleTheaterToggle} isTheater={isTheaterMode} />

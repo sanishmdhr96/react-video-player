@@ -33,6 +33,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       onBuffering,
       onTheaterModeChange,
       contextMenuItems,
+      controlBarItems,
     },
     forwardedRef,
   ) => {
@@ -144,6 +145,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             isLive={state.isLive}
             qualityLevels={state.qualityLevels}
             currentQualityLevel={state.currentQualityLevel}
+            controlBarItems={controlBarItems}
           />
         )}
 

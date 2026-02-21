@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { HlsConfig } from "hls.js";
 
 export interface BufferedRange {
@@ -77,6 +78,14 @@ export interface ContextMenuItem {
   onClick: () => void;
 }
 
+export interface ControlBarItem {
+  key: string;
+  icon: ReactNode;
+  label: string;
+  title?: string;
+  onClick: () => void;
+}
+
 export interface VideoPlayerProps {
   src: string;
   poster?: string;
@@ -119,6 +128,7 @@ export interface VideoPlayerProps {
   onBuffering?: (isBuffering: boolean) => void;
   onTheaterModeChange?: (isTheater: boolean) => void;
   contextMenuItems?: ContextMenuItem[];
+  controlBarItems?: ControlBarItem[];
 }
 
 /** Internal error type used by the HLS module */
