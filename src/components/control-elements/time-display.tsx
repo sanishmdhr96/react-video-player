@@ -1,27 +1,64 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useRef, useEffect } from "react";
 import { formatTime } from "../../lib/format";
 
 export interface TimeDisplayProps {
-  currentTime: number;
-  duration: number;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   isLive?: boolean;
 }
 
+/**
+ * TimeDisplay subscribes directly to the video element's timeupdate and
+ * durationchange events, updating the DOM via refs. It never re-renders
+ * during playback — only when isLive changes (once per source change).
+ */
+const TimeDisplay = memo<TimeDisplayProps>(({ videoRef, isLive = false }) => {
+  const currentRef  = useRef<HTMLSpanElement>(null);
+  const durationRef = useRef<HTMLSpanElement>(null);
 
-const TimeDisplay = memo<TimeDisplayProps>(({ currentTime, duration, isLive = false }) => {
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const updateTime = () => {
+      if (currentRef.current)
+        currentRef.current.textContent = formatTime(video.currentTime);
+    };
+
+    const updateDuration = () => {
+      if (durationRef.current) {
+        const dur = isFinite(video.duration) ? video.duration : 0;
+        durationRef.current.textContent = ` / ${formatTime(dur)}`;
+      }
+    };
+
+    video.addEventListener("timeupdate",     updateTime);
+    video.addEventListener("durationchange", updateDuration);
+    video.addEventListener("seeked",         updateTime);
+
+    updateTime();
+    updateDuration();
+
+    return () => {
+      video.removeEventListener("timeupdate",     updateTime);
+      video.removeEventListener("durationchange", updateDuration);
+      video.removeEventListener("seeked",         updateTime);
+    };
+  }, [videoRef, isLive]);
+
   if (isLive) {
     return (
       <span className="timeDisplay" style={{ opacity: 0.7 }}>
-        {formatTime(currentTime)}
+        <span ref={currentRef}>0:00</span>
       </span>
     );
   }
+
   return (
     <span className="timeDisplay">
-      {formatTime(currentTime)}
-      <span style={{ opacity: 0.6 }}> / {formatTime(duration)}</span>
+      <span ref={currentRef}>0:00</span>
+      <span ref={durationRef} style={{ opacity: 0.6 }}> / 0:00</span>
     </span>
   );
 });

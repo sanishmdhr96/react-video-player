@@ -1,7 +1,7 @@
 {
   "name": "react-helios",
-  "version": "2.0.1",
-  "description": "Production-grade React video player with HLS, quality selection, live streams, subtitles, and thumbnail preview",
+  "version": "2.1.0",
+  "description": "Production-grade React video player with HLS, quality selection, live streams, subtitles, and VTT sprite thumbnail preview",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -42,7 +42,10 @@
     "captions",
     "typescript",
     "nextjs",
-    "picture-in-picture"
+    "picture-in-picture",
+    "vtt",
+    "sprite-sheet",
+    "thumbnail-preview"
   ],
   "author": "Sanish Manandhar <mail.sanishmanandhar@gmail.com>",
   "license": "MIT",

@@ -19,15 +19,9 @@
   border-radius: 2px;
 }
 
-/* ─── Hidden preview video ───────────────────────────────────────────────── */
-.previewVideo {
-  display: none;
-}
-
 /* ─── Thumbnail tooltip ──────────────────────────────────────────────────── */
 .previewTooltip {
   position: absolute;
-  /* Sits above the container; bottom 100% + a small gap */
   bottom: calc(100% + 6px);
   transform: translateX(-50%);
   pointer-events: none;
@@ -36,12 +30,20 @@
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  /* Shown/hidden imperatively — default hidden until mouseenter */
+  display: none;
 }
 
-.previewCanvas {
+/*
+ * VTT sprite-sheet thumbnail cell.
+ * Dimensions and background-position are set imperatively from VTT cue data.
+ * background-size is kept auto so the full sprite sheet renders at natural
+ * resolution and background-position clips to the correct cell.
+ */
+.previewThumbnail {
   display: block;
-  width: 160px;
-  height: 90px;
+  background-repeat: no-repeat;
+  background-size: auto;
 }
 
 .previewTime {
@@ -51,6 +53,8 @@
   color: #fff;
   text-align: center;
   background-color: rgba(0, 0, 0, 0.7);
+  /* Show a minimum width when there is no thumbnail above it */
+  min-width: 52px;
 }
 
 /* ─── Track background ───────────────────────────────────────────────────── */
@@ -93,6 +97,7 @@
 }
 
 /* ─── Hover position indicator (thin white line) ────────────────────────── */
+/* Shown/hidden imperatively — default hidden until mouseenter */
 .hoverIndicator {
   position: absolute;
   top: 50%;
@@ -101,6 +106,7 @@
   height: 100%;
   background-color: rgba(255, 255, 255, 0.8);
   pointer-events: none;
+  display: none;
 }
 
 /* ─── Scrub handle ───────────────────────────────────────────────────────── */

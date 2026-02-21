@@ -3,47 +3,45 @@
 import React, { memo, useRef, useState, useEffect, useCallback, useMemo } from "react";
 import type { VideoPlayerRef, BufferedRange } from "../../lib/types";
 import { formatTime } from "../../lib/format";
-
+import { parseThumbnailVtt, findThumbnailCue } from "../../lib/vtt";
+import type { ThumbnailCue } from "../../lib/vtt";
 
 export interface ProgressBarProps {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   playerRef: VideoPlayerRef;
-  currentTime: number;
-  duration: number;
-  bufferedRanges: BufferedRange[];
   enablePreview?: boolean;
+  thumbnailVtt?: string;
 }
 
 const ProgressBar: React.FC<ProgressBarProps> = memo(({
+  videoRef,
   playerRef,
-  currentTime,
-  duration,
-  bufferedRanges,
   enablePreview = true,
+  thumbnailVtt,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const previewVideoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const containerRef    = useRef<HTMLDivElement>(null);
+  const progressFilledRef = useRef<HTMLDivElement>(null);
+  const scrubHandleRef  = useRef<HTMLDivElement>(null);
+  const tooltipRef      = useRef<HTMLDivElement>(null);
   const hoverTimeTextRef = useRef<HTMLDivElement>(null);
   const hoverIndicatorRef = useRef<HTMLDivElement>(null);
+  const thumbRef        = useRef<HTMLDivElement>(null);
 
-  const [isDragging, setIsDragging] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewLoaded, setPreviewLoaded] = useState(false);
+  // Only bufferedRanges stays in React state — it changes on the `progress`
+  // event which fires infrequently (every few seconds during buffering).
+  const [bufferedRanges, setBufferedRanges] = useState<BufferedRange[]>([]);
 
-  const hoverPosRef = useRef(0);
-  const hoverTimeRef = useRef(0);
-  const previewLoadedRef = useRef(false);
+  // Imperative state — no React re-renders for any of these
+  const isDraggingRef   = useRef(false);
+  const hoverPosRef     = useRef(0);
+  const hoverTimeRef    = useRef(0);
+  const lastCueRef      = useRef<ThumbnailCue | null>(null);
 
-  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSeekTimeRef = useRef<number>(0);
-  const rafRef = useRef<number | null>(null);
-  const isDraggingRef = useRef(false);
-  isDraggingRef.current = isDragging;
+  // VTT thumbnail cues — loaded once, looked up synchronously
+  const thumbnailCuesRef = useRef<ThumbnailCue[]>([]);
 
   /**
-   * Caching the bounding rect so mouse-move doesn't trigger layout reflow
-   * on every pixel. Invalidated whenever the window is resized.
+   * Rect cache — getBoundingClientRect() is expensive; invalidate on resize only.
    */
   const rectCacheRef = useRef<DOMRect | null>(null);
 
@@ -60,54 +58,201 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     return rectCacheRef.current;
   }, []);
 
+  // ─── Load VTT thumbnail cues ────────────────────────────────────────────
   useEffect(() => {
-    if (canvasRef.current) {
-      canvasRef.current.width = 160;
-      canvasRef.current.height = 90;
+    if (!thumbnailVtt) {
+      thumbnailCuesRef.current = [];
+      return;
     }
-  }, []);
+    let cancelled = false;
+    fetch(thumbnailVtt)
+      .then(r => r.text())
+      .then(text => {
+        if (!cancelled) thumbnailCuesRef.current = parseThumbnailVtt(text, thumbnailVtt);
+      })
+      .catch(() => {
+        if (!cancelled) thumbnailCuesRef.current = [];
+      });
+    return () => { cancelled = true; };
+  }, [thumbnailVtt]);
 
-  // ─── Preview video setup ────────────────────────────────────────────────
+  // ─── Subscribe to timeupdate / durationchange ────────────────────────────
+  // Updates the progress fill and scrub handle position imperatively —
+  // zero React re-renders during playback.
   useEffect(() => {
-    if (!enablePreview) return;
+    const video = videoRef.current;
+    if (!video) return;
 
-    const mainVideo = playerRef.getVideoElement();
-    const previewVideo = previewVideoRef.current;
-    if (!mainVideo || !previewVideo) return;
+    const updateProgress = () => {
+      const dur = isFinite(video.duration) ? video.duration : 0;
+      const ct  = video.currentTime;
+      const pct = dur > 0 ? (ct / dur) * 100 : 0;
 
-    const videoSrc = mainVideo.currentSrc || mainVideo.src;
-    if (!videoSrc) return;
-
-    previewVideo.src = videoSrc;
-    previewVideo.muted = true;
-    previewVideo.preload = "auto";
-    previewVideo.crossOrigin = mainVideo.crossOrigin;
-
-    const onReady = () => {
-      previewLoadedRef.current = true;
-      setPreviewLoaded(true);
-    };
-    const onErr = () => {
-      console.warn("[preview] failed to load");
-      previewLoadedRef.current = false;
-      setPreviewLoaded(false);
+      if (progressFilledRef.current)
+        progressFilledRef.current.style.width = `${pct}%`;
+      if (scrubHandleRef.current)
+        scrubHandleRef.current.style.left = `${pct}%`;
+      if (containerRef.current) {
+        containerRef.current.setAttribute("aria-valuenow",  String(Math.round(ct)));
+        containerRef.current.setAttribute("aria-valuemax",  String(Math.round(dur)));
+        containerRef.current.setAttribute("aria-valuetext", formatTime(ct));
+      }
     };
 
-    // loadedmetadata is sufficient — fires before loadeddata and readyState >= 1 is enough to seek
-    previewVideo.addEventListener("loadedmetadata", onReady);
-    previewVideo.addEventListener("error", onErr);
+    video.addEventListener("timeupdate",     updateProgress);
+    video.addEventListener("durationchange", updateProgress);
+    video.addEventListener("seeked",         updateProgress);
+    updateProgress(); // sync on mount
 
     return () => {
-      previewVideo.removeEventListener("loadedmetadata", onReady);
-      previewVideo.removeEventListener("error", onErr);
-      previewVideo.removeAttribute("src");
-      previewVideo.load();
-      previewLoadedRef.current = false;
-      setPreviewLoaded(false);
+      video.removeEventListener("timeupdate",     updateProgress);
+      video.removeEventListener("durationchange", updateProgress);
+      video.removeEventListener("seeked",         updateProgress);
     };
-  }, [playerRef, enablePreview]);
+  }, [videoRef]);
 
+  // ─── Subscribe to progress (buffered ranges) ────────────────────────────
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
 
+    const updateBuffered = () => {
+      const ranges: BufferedRange[] = [];
+      for (let i = 0; i < video.buffered.length; i++) {
+        ranges.push({ start: video.buffered.start(i), end: video.buffered.end(i) });
+      }
+      setBufferedRanges(ranges);
+    };
+
+    video.addEventListener("progress", updateBuffered);
+    return () => video.removeEventListener("progress", updateBuffered);
+  }, [videoRef]);
+
+  // ─── Non-React drag-state helpers ────────────────────────────────────────
+  const startDragging = useCallback(() => {
+    isDraggingRef.current = true;
+    scrubHandleRef.current?.classList.add("dragging");
+  }, []);
+
+  const stopDragging = useCallback(() => {
+    isDraggingRef.current = false;
+    scrubHandleRef.current?.classList.remove("dragging");
+  }, []);
+
+  // ─── Show / hide preview tooltip ─────────────────────────────────────────
+  const showTooltip = useCallback(() => {
+    if (!enablePreview) return;
+    rectCacheRef.current = null; // invalidate rect on re-entry
+    if (tooltipRef.current)       tooltipRef.current.style.display       = "";
+    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.display = "";
+  }, [enablePreview]);
+
+  const hideTooltip = useCallback(() => {
+    if (tooltipRef.current)        tooltipRef.current.style.display        = "none";
+    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.display  = "none";
+  }, []);
+
+  // ─── Apply thumbnail from VTT cue ────────────────────────────────────────
+  const applyThumbnail = useCallback((time: number) => {
+    if (!thumbRef.current || !thumbnailCuesRef.current.length) return;
+    const cue = findThumbnailCue(thumbnailCuesRef.current, time);
+    lastCueRef.current = cue;
+    if (!cue) return;
+    const el = thumbRef.current;
+    el.style.backgroundImage    = `url(${cue.url})`;
+    el.style.backgroundPosition = `-${cue.x}px -${cue.y}px`;
+    el.style.width              = `${cue.w}px`;
+    el.style.height             = `${cue.h}px`;
+  }, []);
+
+  // ─── Geometry helpers ────────────────────────────────────────────────────
+  const getTimeFromClientX = useCallback((clientX: number): number => {
+    const rect = getRect();
+    const dur  = videoRef.current?.duration;
+    if (!rect || rect.width === 0 || !dur || !isFinite(dur)) return 0;
+    const pos = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    return (pos / rect.width) * dur;
+  }, [getRect, videoRef]);
+
+  const getPxFromClientX = useCallback((clientX: number): number => {
+    const rect = getRect();
+    if (!rect) return 0;
+    return Math.max(0, Math.min(clientX - rect.left, rect.width));
+  }, [getRect]);
+
+  // ─── Keyboard handler ────────────────────────────────────────────────────
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const ct  = video.currentTime;
+    const dur = isFinite(video.duration) ? video.duration : 0;
+
+    switch (e.key) {
+      case "ArrowLeft":
+      case "ArrowRight": {
+        e.preventDefault();
+        e.nativeEvent.stopImmediatePropagation();
+        const step = e.shiftKey ? 10 : 5;
+        playerRef.seek(e.key === "ArrowLeft"
+          ? Math.max(0, ct - step)
+          : Math.min(dur, ct + step));
+        break;
+      }
+      case "Home":
+        e.preventDefault();
+        e.nativeEvent.stopImmediatePropagation();
+        playerRef.seek(0);
+        break;
+      case "End":
+        if (dur > 0) {
+          e.preventDefault();
+          e.nativeEvent.stopImmediatePropagation();
+          playerRef.seek(dur);
+        }
+        break;
+    }
+  }, [videoRef, playerRef]);
+
+  // ─── Mouse handlers ───────────────────────────────────────────────────────
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const time = getTimeFromClientX(e.clientX);
+    const px   = getPxFromClientX(e.clientX);
+
+    hoverPosRef.current  = px;
+    hoverTimeRef.current = time;
+
+    // Update tooltip position and time text imperatively
+    if (tooltipRef.current)        tooltipRef.current.style.left        = `${px}px`;
+    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.left  = `${px}px`;
+    if (hoverTimeTextRef.current)  hoverTimeTextRef.current.textContent  = formatTime(time);
+
+    applyThumbnail(time);
+
+    if (isDraggingRef.current) playerRef.seek(time);
+  }, [playerRef, applyThumbnail, getTimeFromClientX, getPxFromClientX]);
+
+  const handleMouseEnter = useCallback(() => {
+    showTooltip();
+  }, [showTooltip]);
+
+  const handleMouseLeave = useCallback(() => {
+    hideTooltip();
+    stopDragging();
+  }, [hideTooltip, stopDragging]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    startDragging();
+    playerRef.seek(getTimeFromClientX(e.clientX));
+  }, [startDragging, getTimeFromClientX, playerRef]);
+
+  const handleMouseUp = useCallback(() => stopDragging(), [stopDragging]);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) playerRef.seek(getTimeFromClientX(e.clientX));
+  }, [getTimeFromClientX, playerRef]);
+
+  // ─── Touch handlers ───────────────────────────────────────────────────────
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -118,163 +263,34 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     return () => container.removeEventListener("touchmove", onTouchMove);
   }, []);
 
-  // ─── Draw preview frame ─────────────────────────────────────────────────
-  const updatePreview = useCallback((time: number) => {
-    if (!enablePreview || !previewLoadedRef.current) return;
-
-    const previewVideo = previewVideoRef.current;
-    const canvas = canvasRef.current;
-    if (!previewVideo || !canvas) return;
-
-    // Throttle to ~10 seeks/s
-    const now = Date.now();
-    if (now - lastSeekTimeRef.current < 100) return;
-    lastSeekTimeRef.current = now;
-
-    if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-
-    let drawn = false;
-
-    const drawFrame = () => {
-      if (drawn) return;
-      if (previewVideo.readyState >= 2) {
-        drawn = true;
-        if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(() => {
-          const ctx = canvas.getContext("2d", { alpha: false, willReadFrequently: false });
-          if (!ctx) return;
-          ctx.drawImage(previewVideo, 0, 0, 160, 90);
-        });
-      }
-    };
-
-    previewVideo.currentTime = time;
-    previewVideo.addEventListener("seeked", drawFrame, { once: true });
-
-    updateTimeoutRef.current = setTimeout(() => {
-      if (!drawn) drawFrame();
-    }, 200);
-  }, [enablePreview]);
-
-  // ─── Geometry helpers (no layout thrash) ───────────────────────────────
-  const getTimeFromClientX = useCallback((clientX: number): number => {
-    const rect = getRect();
-    if (!rect || rect.width === 0) return 0;
-    const pos = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    return (pos / rect.width) * duration;
-  }, [getRect, duration]);
-
-  const getPxFromClientX = useCallback((clientX: number): number => {
-    const rect = getRect();
-    if (!rect) return 0;
-    return Math.max(0, Math.min(clientX - rect.left, rect.width));
-  }, [getRect]);
-
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    switch (e.key) {
-      case "ArrowLeft":
-      case "ArrowRight": {
-        e.preventDefault();
-        e.nativeEvent.stopImmediatePropagation();
-        const step = e.shiftKey ? 10 : 5;
-        const newTime = e.key === "ArrowLeft"
-          ? Math.max(0, currentTime - step)
-          : Math.min(duration || 0, currentTime + step);
-        playerRef.seek(newTime);
-        break;
-      }
-      case "Home":
-        e.preventDefault();
-        e.nativeEvent.stopImmediatePropagation();
-        playerRef.seek(0);
-        break;
-      case "End":
-        if (duration > 0) {
-          e.preventDefault();
-          e.nativeEvent.stopImmediatePropagation();
-          playerRef.seek(duration);
-        }
-        break;
-    }
-  }, [currentTime, duration, playerRef]);
-
-  // ─── Mouse / touch handlers ─────────────────────────────────────────────
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const time = getTimeFromClientX(e.clientX);
-    const px = getPxFromClientX(e.clientX);
-
-    hoverPosRef.current = px;
-    hoverTimeRef.current = time;
-    if (tooltipRef.current) tooltipRef.current.style.left = `${px}px`;
-    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.left = `${px}px`;
-    if (hoverTimeTextRef.current) hoverTimeTextRef.current.textContent = formatTime(time);
-
-    if (isDraggingRef.current) {
-      playerRef.seek(time);
-    } else if (enablePreview) {
-      updatePreview(time);
-    }
-  }, [enablePreview, playerRef, updatePreview, getTimeFromClientX, getPxFromClientX]);
-
-  const handleMouseEnter = useCallback(() => {
-    rectCacheRef.current = null;
-    setShowPreview(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setShowPreview(false);
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-    playerRef.seek(getTimeFromClientX(e.clientX));
-  }, [getTimeFromClientX, playerRef]);
-
-  const handleMouseUp = useCallback(() => setIsDragging(false), []);
-
-  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) playerRef.seek(getTimeFromClientX(e.clientX));
-  }, [isDragging, getTimeFromClientX, playerRef]);
-
-
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     rectCacheRef.current = null;
-    setIsDragging(true);
+    startDragging();
+    playerRef.seek(getTimeFromClientX(e.touches[0].clientX));
+  }, [startDragging, getTimeFromClientX, playerRef]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
     playerRef.seek(getTimeFromClientX(e.touches[0].clientX));
   }, [getTimeFromClientX, playerRef]);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    playerRef.seek(getTimeFromClientX(e.touches[0].clientX));
-  }, [isDragging, getTimeFromClientX, playerRef]);
+  const handleTouchEnd = useCallback(() => stopDragging(), [stopDragging]);
 
-  const handleTouchEnd = useCallback(() => setIsDragging(false), []);
-
+  // Release drag if pointer leaves the window
   useEffect(() => {
-    const up = () => setIsDragging(false);
+    const up = () => stopDragging();
     window.addEventListener("mouseup", up);
     return () => window.removeEventListener("mouseup", up);
-  }, []);
+  }, [stopDragging]);
 
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-
+  // ─── Buffered segments (memoised — only re-renders on progress event) ────
   const bufferedSegments = useMemo(() => {
-    if (duration <= 0) return null;
+    const video = videoRef.current;
+    const dur   = video && isFinite(video.duration) ? video.duration : 0;
+    if (dur <= 0 || !bufferedRanges.length) return null;
     return bufferedRanges.map((range, i) => {
-      const start = (range.start / duration) * 100;
-      const width = ((range.end - range.start) / duration) * 100;
+      const start = (range.start / dur) * 100;
+      const width = ((range.end - range.start) / dur) * 100;
       return (
         <div
           key={i}
@@ -283,7 +299,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
         />
       );
     });
-  }, [bufferedRanges, duration]);
+  }, [bufferedRanges, videoRef]);
 
   return (
     <div
@@ -302,37 +318,45 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
       role="slider"
       aria-label="Video progress"
       aria-valuemin={0}
-      aria-valuemax={Math.round(duration)}
-      aria-valuenow={Math.round(currentTime)}
-      aria-valuetext={formatTime(currentTime)}
+      aria-valuemax={0}
+      aria-valuenow={0}
+      aria-valuetext="0:00"
       tabIndex={0}
     >
-      {/* Hidden preview video */}
+      {/* Tooltip — always in DOM when preview enabled; shown/hidden imperatively */}
       {enablePreview && (
-        <video ref={previewVideoRef} className="previewVideo" playsInline muted preload="auto" aria-hidden="true" />
-      )}
-
-      {/* Preview thumbnail tooltip — position/time updated via refs*/}
-      {enablePreview && showPreview && previewLoaded && (
-        <div ref={tooltipRef} className="previewTooltip" style={{ left: hoverPosRef.current }} aria-hidden="true">
-          <canvas ref={canvasRef} className="previewCanvas" />
-          <div ref={hoverTimeTextRef} className="previewTime">{formatTime(hoverTimeRef.current)}</div>
+        <div
+          ref={tooltipRef}
+          className="previewTooltip"
+          style={{ left: 0, display: "none" }}
+          aria-hidden="true"
+        >
+          {thumbnailVtt && (
+            <div ref={thumbRef} className="previewThumbnail" />
+          )}
+          <div ref={hoverTimeTextRef} className="previewTime" />
         </div>
       )}
 
-      {/* Track background (overflow:hidden – keeps buffered/filled bars clipped) */}
+      {/* Track */}
       <div className="progressBackground">
         {bufferedSegments}
-        <div className="progressFilled" style={{ width: `${progress}%` }} />
-        {showPreview && (
-          <div ref={hoverIndicatorRef} className="hoverIndicator" style={{ left: hoverPosRef.current }} aria-hidden="true" />
+        <div ref={progressFilledRef} className="progressFilled" style={{ width: "0%" }} />
+        {enablePreview && (
+          <div
+            ref={hoverIndicatorRef}
+            className="hoverIndicator"
+            style={{ left: 0, display: "none" }}
+            aria-hidden="true"
+          />
         )}
       </div>
 
-
+      {/* Scrub handle — class toggled imperatively for dragging state */}
       <div
-        className={`scrubHandle${isDragging ? " dragging" : ""}`}
-        style={{ left: `${progress}%` }}
+        ref={scrubHandleRef}
+        className="scrubHandle"
+        style={{ left: "0%" }}
         aria-hidden="true"
       />
     </div>

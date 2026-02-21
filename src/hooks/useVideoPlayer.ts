@@ -217,9 +217,8 @@ export function useVideoPlayer(
       optionsRef.current.onEnded?.();
     };
     const handleTimeUpdate = () => {
-      // Only notify external callback – internal state is updated but
-      // onTimeUpdate is called outside setState to avoid extra renders.
-      setState((prev) => ({ ...prev, currentTime: video.currentTime }));
+      // currentTime is NOT stored in React state — ProgressBar and TimeDisplay
+      // subscribe to the video element directly, eliminating re-renders on every tick.
       optionsRef.current.onTimeUpdate?.(video.currentTime);
     };
     const handleDurationChange = () => {
@@ -267,14 +266,8 @@ export function useVideoPlayer(
     const handlePlaying = () =>
       setState((prev) => ({ ...prev, isBuffering: false }));
     const handleProgress = () => {
-      const ranges: Array<{ start: number; end: number }> = [];
-      for (let i = 0; i < video.buffered.length; i++) {
-        ranges.push({
-          start: video.buffered.start(i),
-          end: video.buffered.end(i),
-        });
-      }
-      setState((prev) => ({ ...prev, bufferedRanges: ranges }));
+      // bufferedRanges are NOT stored in React state — ProgressBar subscribes
+      // to the video element's progress event directly.
     };
     const handleFullscreenChange = () => {
       const fs = !!(
@@ -436,10 +429,17 @@ export function useVideoPlayer(
     }
   }, [videoRef]);
 
-  const getState = useCallback(
-    (): PlayerState => ({ ...stateRef.current }),
-    [],
-  );
+  const getState = useCallback((): PlayerState => {
+    const video = videoRef.current;
+    const currentTime = video?.currentTime ?? 0;
+    const bufferedRanges: import("../lib/types").BufferedRange[] = [];
+    if (video) {
+      for (let i = 0; i < video.buffered.length; i++) {
+        bufferedRanges.push({ start: video.buffered.start(i), end: video.buffered.end(i) });
+      }
+    }
+    return { ...stateRef.current, currentTime, bufferedRanges };
+  }, [videoRef]);
 
   const getVideoElement = useCallback(
     (): HTMLVideoElement | null => videoRef.current ?? null,

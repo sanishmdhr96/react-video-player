@@ -82,6 +82,24 @@ export interface VideoPlayerProps {
   className?: string;
   enableHLS?: boolean;
   enablePreview?: boolean;
+  /**
+   * URL to a WebVTT thumbnail track for sprite-sheet preview on the progress bar.
+   *
+   * The VTT file should map time ranges to sprite-sheet coordinates using the
+   * standard `#xywh=x,y,w,h` fragment format:
+   *
+   * ```
+   * WEBVTT
+   *
+   * 00:00:00.000 --> 00:00:05.000
+   * https://cdn.example.com/thumbs/storyboard0.jpg#xywh=0,0,160,90
+   * ```
+   *
+   * When provided, hovering the progress bar shows a thumbnail instead of
+   * requiring a second video decode. If omitted, only the timestamp tooltip
+   * is shown.
+   */
+  thumbnailVtt?: string;
   hlsConfig?: Partial<HlsConfig>;
   subtitles?: SubtitleTrack[];
   crossOrigin?: "anonymous" | "use-credentials";

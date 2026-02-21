@@ -1,6 +1,6 @@
 # react-helios
 
-Production-grade React video player with HLS streaming, adaptive quality selection, live stream support, subtitle tracks, thumbnail preview, Picture-in-Picture, and full keyboard control.
+Production-grade React video player with HLS streaming, adaptive quality selection, live stream support, subtitle tracks, VTT sprite sheet thumbnail preview, Picture-in-Picture, and full keyboard control.
 
 ## Installation
 
@@ -47,6 +47,42 @@ Pass any `.m3u8` URL — HLS.js is initialised automatically:
 
 On Safari the browser's native HLS engine is used. A **LIVE** badge and **GO LIVE** button appear automatically for live streams.
 
+## Thumbnail Preview
+
+Hover over the progress bar to see a time tooltip. For rich sprite-sheet thumbnails, pass a `thumbnailVtt` URL pointing to a [WebVTT thumbnail file](https://developer.bitmovin.com/playback/docs/webvtt-based-thumbnails).
+
+```tsx
+<VideoPlayer
+  src="https://example.com/video.mp4"
+  thumbnailVtt="https://example.com/thumbs/storyboard.vtt"
+/>
+```
+
+### VTT format
+
+Each cue in the `.vtt` file maps a time range to a rectangular region inside a sprite image using the `#xywh=x,y,w,h` fragment:
+
+```
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+https://example.com/thumbs/sprite.jpg#xywh=0,0,160,90
+
+00:00:05.000 --> 00:00:10.000
+https://example.com/thumbs/sprite.jpg#xywh=160,0,160,90
+
+00:00:10.000 --> 00:00:15.000
+https://example.com/thumbs/sprite.jpg#xywh=320,0,160,90
+```
+
+The player fetches the VTT file once, parses all cues, and uses CSS `background-position` to display the correct sprite cell during hover — **no additional network requests per hover**.
+
+To disable the preview entirely:
+
+```tsx
+<VideoPlayer src="..." enablePreview={false} />
+```
+
 ## Props
 
 | Prop | Type | Default | Description |
@@ -60,7 +96,8 @@ On Safari the browser's native HLS engine is used. A **LIVE** badge and **GO LIV
 | `preload` | `"none" \| "metadata" \| "auto"` | `"metadata"` | Native `preload` attribute |
 | `playbackRates` | `PlaybackRate[]` | `[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]` | Available speed options |
 | `enableHLS` | `boolean` | `true` | Enable HLS.js for `.m3u8` sources |
-| `enablePreview` | `boolean` | `true` | Show thumbnail preview on progress bar hover (disabled automatically for HLS) |
+| `enablePreview` | `boolean` | `true` | Show thumbnail / time tooltip on progress bar hover |
+| `thumbnailVtt` | `string` | — | URL to a WebVTT sprite sheet file for rich thumbnail preview |
 | `hlsConfig` | `Partial<HlsConfig>` | — | Override any [hls.js configuration](https://github.com/video-dev/hls.js/blob/master/docs/API.md#fine-tuning) option |
 | `subtitles` | `SubtitleTrack[]` | — | Subtitle / caption tracks |
 | `crossOrigin` | `"anonymous" \| "use-credentials"` | — | CORS attribute for the video element |
@@ -165,7 +202,11 @@ import type {
   BufferedRange,
   VideoError,
   VideoErrorCode,
+  ThumbnailCue,
 } from "react-helios";
+
+// VTT utilities (useful for server-side pre-parsing or custom UIs)
+import { parseThumbnailVtt, findThumbnailCue } from "react-helios";
 ```
 
 ### `PlayerState`
@@ -207,14 +248,37 @@ interface VideoError {
 }
 ```
 
+### `ThumbnailCue`
+
+```ts
+interface ThumbnailCue {
+  start: number; // seconds
+  end: number;   // seconds
+  url: string;   // absolute URL to the sprite image
+  x: number;     // pixel offset within sprite
+  y: number;
+  w: number;     // cell width in pixels
+  h: number;     // cell height in pixels
+}
+```
+
+## Performance
+
+The player is architected to produce **zero React re-renders during playback**:
+
+- `timeupdate` and `progress` events are handled by direct DOM mutation (refs), not React state.
+- `ProgressBar` and `TimeDisplay` self-subscribe to the video element — the parent tree never re-renders on seek or time change.
+- VTT sprite thumbnails are looked up via binary search (O(log n)) and rendered via CSS `background-position` — no hidden `<video>` element, no canvas, no network requests per hover.
+- Buffered ranges are the only state that triggers a re-render (fires every few seconds during buffering, not 60× per second).
+
 ## Project Structure
 
 ```
-react-video-player/
+react-helios/
 ├── src/                    # Library source
 │   ├── components/         # VideoPlayer, Controls, control elements
 │   ├── hooks/              # useVideoPlayer (state + HLS init)
-│   ├── lib/                # Types, HLS utilities, format helpers
+│   ├── lib/                # Types, HLS utilities, VTT parser, format helpers
 │   └── styles/             # CSS
 ├── examples/
 │   └── nextjs-demo/        # Standalone Next.js demo app

@@ -5,19 +5,18 @@ import type {
   PlaybackRate,
   VideoPlayerRef,
   HLSQualityLevel,
-  BufferedRange,
 } from "../lib/types";
 import { ControlElements } from "./control-elements";
 
 interface ControlsProps {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   playerRef: VideoPlayerRef;
   /** Ref to the outer player container; used to scope keyboard shortcuts to the focused player */
   playerContainerRef: React.RefObject<HTMLElement | null>;
   playbackRates: PlaybackRate[];
   enablePreview: boolean;
+  thumbnailVtt?: string;
   isPlaying: boolean;
-  currentTime: number;
-  duration: number;
   volume: number;
   isMuted: boolean;
   playbackRate: number;
@@ -26,23 +25,22 @@ interface ControlsProps {
   isLive: boolean;
   qualityLevels: HLSQualityLevel[];
   currentQualityLevel: number;
-  bufferedRanges: BufferedRange[];
 }
 
 /**
- * Controls is intentionally NOT wrapped in React.memo here – it receives
- * currentTime which changes every tick, so memo wouldn't help at this level.
- * Instead, all its CHILDREN are memoized so they skip renders when their
- * specific props haven't changed.
+ * Controls no longer receives currentTime, duration, or bufferedRanges.
+ * ProgressBar and TimeDisplay subscribe to the video element directly,
+ * so this component only re-renders on meaningful UI state changes
+ * (play/pause, volume, fullscreen, quality — never on timeupdate).
  */
 export const Controls: React.FC<ControlsProps> = ({
+  videoRef,
   playerRef,
   playerContainerRef,
   playbackRates,
   enablePreview,
+  thumbnailVtt,
   isPlaying,
-  currentTime,
-  duration,
   volume,
   isMuted,
   playbackRate,
@@ -51,22 +49,19 @@ export const Controls: React.FC<ControlsProps> = ({
   isLive,
   qualityLevels,
   currentQualityLevel,
-  bufferedRanges,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showControls, setShowControls] = useState(true);
 
   /**
-   * A ref that always holds the latest state values.
-   * The keyboard handler reads from this ref so the effect only needs
-   * playerRef as a dependency – it NEVER re-registers on every timeupdate.
-   *
+   * Stable ref capturing the values the keyboard handler needs.
+   * isPlaying/volume/isMuted/isLive come from React state (rare changes).
+   * currentTime/duration are read directly from the video element so the
+   * keyboard shortcuts always see fresh values without subscribing to state.
    */
-  const liveRef = useRef({
-    isPlaying, currentTime, duration, volume, isMuted, isLive,
-  });
-  liveRef.current = { isPlaying, currentTime, duration, volume, isMuted, isLive };
+  const liveRef = useRef({ isPlaying, volume, isMuted, isLive });
+  liveRef.current = { isPlaying, volume, isMuted, isLive };
 
   // ─── Auto-hide controls ──────────────────────────────────────────────────
   useEffect(() => {
@@ -103,15 +98,15 @@ export const Controls: React.FC<ControlsProps> = ({
   // ─── Keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle keyboard events when this player container has focus,
-      // preventing shortcuts from firing on all players simultaneously.
       if (!playerContainerRef.current?.contains(document.activeElement)) return;
 
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
 
-      // Read latest values from the ref – no state in closure
-      const { isPlaying: playing, currentTime: ct, duration: dur, volume: vol, isLive: live } = liveRef.current;
+      const { isPlaying: playing, volume: vol, isLive: live } = liveRef.current;
+      // Read time/duration directly from the video element — always fresh
+      const ct = videoRef.current?.currentTime ?? 0;
+      const dur = videoRef.current?.duration ?? 0;
 
       switch (e.code) {
         case "Space": case "KeyK":
@@ -162,11 +157,9 @@ export const Controls: React.FC<ControlsProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playerRef, playerContainerRef]); // ← state read via liveRef; container ref for focus check
+  }, [playerRef, playerContainerRef, videoRef]);
 
   // ─── Stable callbacks for child components ───────────────────────────────
-  // These are memoized so child React.memo components don't re-render due
-  // to new function references on every render.
   const handlePlay = useCallback(() => playerRef.play(), [playerRef]);
   const handlePause = useCallback(() => playerRef.pause(), [playerRef]);
   const handleVolumeChange = useCallback((v: number) => playerRef.setVolume(v), [playerRef]);
@@ -199,24 +192,21 @@ export const Controls: React.FC<ControlsProps> = ({
         role="region"
         aria-label="Video player controls"
       >
-        {/* Progress bar – re-renders on every tick, intentionally */}
+        {/* Progress bar — self-subscribes to timeupdate/progress on videoRef */}
         <ControlElements.ProgressBar
+          videoRef={videoRef}
           playerRef={playerRef}
-          currentTime={currentTime}
-          duration={duration}
-          bufferedRanges={bufferedRanges}
           enablePreview={enablePreview}
+          thumbnailVtt={thumbnailVtt}
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
-          {/* Play/Pause – memoized; only re-renders when isPlaying changes */}
           {isPlaying ? (
             <ControlElements.PauseButton onClick={handlePause} />
           ) : (
             <ControlElements.PlayButton onClick={handlePlay} />
           )}
 
-          {/* Volume – memoized; skips timeupdate renders */}
           <ControlElements.VolumeControl
             volume={volume}
             isMuted={isMuted}
@@ -224,21 +214,18 @@ export const Controls: React.FC<ControlsProps> = ({
             onToggleMute={handleToggleMute}
           />
 
-          {/* Time – re-renders on every tick (needs currentTime) */}
+          {/* TimeDisplay — self-subscribes to timeupdate/durationchange on videoRef */}
           <ControlElements.TimeDisplay
-            currentTime={currentTime}
-            duration={duration}
+            videoRef={videoRef}
             isLive={isLive}
           />
 
           <div style={{ flex: 1 }} />
 
-          {/* GO LIVE – memoized; only shown for live streams */}
           {isLive && (
             <GoLiveButton onClick={handleSeekToLive} />
           )}
 
-          {/* Settings – memoized; skips timeupdate renders */}
           <ControlElements.SettingsMenu
             currentRate={playbackRate}
             playbackRates={playbackRates}
@@ -248,10 +235,7 @@ export const Controls: React.FC<ControlsProps> = ({
             onQualityChange={handleQualityChange}
           />
 
-          {/* PiP  */}
           <ControlElements.PiPButton onClick={handlePiP} isPiP={isPictureInPicture} />
-
-          {/* Fullscreen  */}
           <ControlElements.FullscreenButton onClick={handleFullscreen} isFullscreen={isFullscreen} />
         </div>
       </div>
@@ -259,10 +243,6 @@ export const Controls: React.FC<ControlsProps> = ({
   );
 };
 
-/**
- * GO LIVE button – only rendered for live streams.
- * Stable onClick prop (useCallback in parent) prevents unnecessary re-renders.
- */
 const GoLiveButton = memo(({ onClick }: { onClick: () => void }) => (
   <button
     onClick={onClick}

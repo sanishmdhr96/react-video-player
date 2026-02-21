@@ -1,6 +1,6 @@
 "use client";
 
-import React, { forwardRef, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { forwardRef, useEffect, useRef, useCallback } from "react";
 import type { VideoPlayerProps, VideoPlayerRef } from "../lib/types";
 import { useVideoPlayer } from "../hooks/useVideoPlayer";
 import { Controls } from "./Controls";
@@ -19,6 +19,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       className,
       enableHLS = true,
       enablePreview = true,
+      thumbnailVtt,
       hlsConfig,
       subtitles,
       crossOrigin,
@@ -75,11 +76,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       playerRef.toggleFullscreen();
     }, [playerRef]);
 
-    /** Precompute once per src change, not on every render */
-    const isHLSSrc = useMemo(
-      () => enableHLS && !!src && src.toLowerCase().includes(".m3u8"),
-      [enableHLS, src],
-    );
 
 
     return (
@@ -122,13 +118,13 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
 
         {controls && (
           <Controls
+            videoRef={videoRef}
             playerRef={playerRef}
             playerContainerRef={containerRef}
             playbackRates={playbackRates}
-            enablePreview={enablePreview && !isHLSSrc}
+            enablePreview={enablePreview}
+            thumbnailVtt={thumbnailVtt}
             isPlaying={state.isPlaying}
-            currentTime={state.currentTime}
-            duration={state.duration}
             volume={state.volume}
             isMuted={state.isMuted}
             playbackRate={state.playbackRate}
@@ -137,7 +133,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             isLive={state.isLive}
             qualityLevels={state.qualityLevels}
             currentQualityLevel={state.currentQualityLevel}
-            bufferedRanges={state.bufferedRanges}
           />
         )}
 

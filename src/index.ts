@@ -21,3 +21,7 @@ export type {
 
 // Utilities
 export { formatTime, isHLSUrl, getMimeType } from "./lib/format";
+
+// VTT thumbnail helpers (for custom integrations)
+export type { ThumbnailCue } from "./lib/vtt";
+export { parseThumbnailVtt, findThumbnailCue } from "./lib/vtt";
