@@ -28,6 +28,7 @@ interface UseVideoPlayerOptions {
   onTimeUpdate?: (currentTime: number) => void;
   onDurationChange?: (duration: number) => void;
   onBuffering?: (isBuffering: boolean) => void;
+  onTheaterModeChange?: (isTheater: boolean) => void;
 }
 
 const DEFAULT_STATE: PlayerState = {
@@ -39,6 +40,7 @@ const DEFAULT_STATE: PlayerState = {
   playbackRate: 1,
   isFullscreen: false,
   isPictureInPicture: false,
+  isTheaterMode: false,
   isBuffering: false,
   bufferedRanges: [],
   error: null,
@@ -429,6 +431,14 @@ export function useVideoPlayer(
     }
   }, [videoRef]);
 
+  const toggleTheaterMode = useCallback(() => {
+    setState((prev) => {
+      const next = !prev.isTheaterMode;
+      optionsRef.current.onTheaterModeChange?.(next);
+      return { ...prev, isTheaterMode: next };
+    });
+  }, []);
+
   const getState = useCallback((): PlayerState => {
     const video = videoRef.current;
     const currentTime = video?.currentTime ?? 0;
@@ -458,6 +468,7 @@ export function useVideoPlayer(
       seekToLive,
       toggleFullscreen,
       togglePictureInPicture,
+      toggleTheaterMode,
       getState,
       getVideoElement,
     }),
@@ -472,6 +483,7 @@ export function useVideoPlayer(
       seekToLive,
       toggleFullscreen,
       togglePictureInPicture,
+      toggleTheaterMode,
       getState,
       getVideoElement,
     ],

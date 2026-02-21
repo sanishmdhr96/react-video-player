@@ -48,6 +48,7 @@ export interface PlayerState {
   error: VideoError | null;
   isFullscreen: boolean;
   isPictureInPicture: boolean;
+  isTheaterMode: boolean;
   isLive: boolean;
   qualityLevels: HLSQualityLevel[];
   currentQualityLevel: number;
@@ -66,6 +67,7 @@ export interface VideoPlayerRef {
   seekToLive: () => void;
   toggleFullscreen: () => Promise<void>;
   togglePictureInPicture: () => Promise<void>;
+  toggleTheaterMode: () => void;
   getState: () => PlayerState;
   getVideoElement: () => HTMLVideoElement | null;
 }
@@ -110,6 +112,7 @@ export interface VideoPlayerProps {
   onTimeUpdate?: (time: number) => void;
   onDurationChange?: (duration: number) => void;
   onBuffering?: (isBuffering: boolean) => void;
+  onTheaterModeChange?: (isTheater: boolean) => void;
 }
 
 /** Internal error type used by the HLS module */

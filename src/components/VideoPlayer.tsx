@@ -1,9 +1,10 @@
 "use client";
 
-import React, { forwardRef, useEffect, useRef, useCallback } from "react";
+import React, { forwardRef, useEffect, useRef, useCallback, useState } from "react";
 import type { VideoPlayerProps, VideoPlayerRef } from "../lib/types";
 import { useVideoPlayer } from "../hooks/useVideoPlayer";
 import { Controls } from "./Controls";
+import { ContextMenu } from "./ContextMenu";
 
 const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
   (
@@ -30,6 +31,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       onTimeUpdate,
       onDurationChange,
       onBuffering,
+      onTheaterModeChange,
     },
     forwardedRef,
   ) => {
@@ -53,8 +55,11 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         onTimeUpdate,
         onDurationChange,
         onBuffering,
+        onTheaterModeChange,
       },
     );
+
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
     useEffect(() => {
       fullscreenContainerRef.current = containerRef.current;
@@ -73,6 +78,11 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       playerRef.toggleFullscreen();
     }, [playerRef]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    }, []);
+
 
 
     return (
@@ -89,6 +99,8 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         }}
         className={className}
         data-test="video-player-container"
+        data-theater={state.isTheaterMode ? "true" : undefined}
+        onContextMenu={handleContextMenu}
       >
         <video
           ref={videoRef}
@@ -127,9 +139,22 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             playbackRate={state.playbackRate}
             isFullscreen={state.isFullscreen}
             isPictureInPicture={state.isPictureInPicture}
+            isTheaterMode={state.isTheaterMode}
             isLive={state.isLive}
             qualityLevels={state.qualityLevels}
             currentQualityLevel={state.currentQualityLevel}
+          />
+        )}
+
+        {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            isPlaying={state.isPlaying}
+            src={src}
+            videoRef={videoRef}
+            playerRef={playerRef}
+            onClose={() => setContextMenu(null)}
           />
         )}
 

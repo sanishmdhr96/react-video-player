@@ -57,4 +57,26 @@ export const PiPButton = memo<PiPButtonProps>(({ onClick, isPiP = false }) => (
 ));
 PiPButton.displayName = "PiPButton";
 
-export default { PlayButton, PauseButton, FullscreenButton, PiPButton };
+export interface TheaterButtonProps { onClick: () => void; isTheater?: boolean; }
+
+export const TheaterButton = memo<TheaterButtonProps>(({ onClick, isTheater = false }) => (
+  <button
+    onClick={onClick}
+    className="controlButton"
+    aria-label={isTheater ? "Exit Theater Mode" : "Theater Mode"}
+    title={isTheater ? "Exit Theater Mode (T)" : "Theater Mode (T)"}
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      {isTheater ? (
+        /* Exit theater: narrower inner rectangle — signals "shrink back" */
+        <path d="M19 7H5c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm0 8H5V9h14v6z" />
+      ) : (
+        /* Enter theater: full-width rectangle — signals "expand wide" */
+        <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
+      )}
+    </svg>
+  </button>
+));
+TheaterButton.displayName = "TheaterButton";
+
+export default { PlayButton, PauseButton, FullscreenButton, PiPButton, TheaterButton };

@@ -21,6 +21,7 @@ interface ControlsProps {
   playbackRate: number;
   isFullscreen: boolean;
   isPictureInPicture: boolean;
+  isTheaterMode: boolean;
   isLive: boolean;
   qualityLevels: HLSQualityLevel[];
   currentQualityLevel: number;
@@ -39,6 +40,7 @@ export const Controls: React.FC<ControlsProps> = ({
   playbackRate,
   isFullscreen,
   isPictureInPicture,
+  isTheaterMode,
   isLive,
   qualityLevels,
   currentQualityLevel,
@@ -134,6 +136,10 @@ export const Controls: React.FC<ControlsProps> = ({
           e.preventDefault();
           playerRef.togglePictureInPicture();
           break;
+        case "KeyT":
+          e.preventDefault();
+          playerRef.toggleTheaterMode();
+          break;
         case "KeyL":
           e.preventDefault();
           if (live) playerRef.seekToLive();
@@ -160,6 +166,7 @@ export const Controls: React.FC<ControlsProps> = ({
   const handleRateChange = useCallback((r: PlaybackRate) => playerRef.setPlaybackRate(r), [playerRef]);
   const handleQualityChange = useCallback((l: number) => playerRef.setQualityLevel(l), [playerRef]);
   const handlePiP = useCallback(() => playerRef.togglePictureInPicture(), [playerRef]);
+  const handleTheaterToggle = useCallback(() => playerRef.toggleTheaterMode(), [playerRef]);
   const handleFullscreen = useCallback(() => playerRef.toggleFullscreen(), [playerRef]);
   const handleSeekToLive = useCallback(() => playerRef.seekToLive(), [playerRef]);
 
@@ -229,6 +236,7 @@ export const Controls: React.FC<ControlsProps> = ({
           />
 
           <ControlElements.PiPButton onClick={handlePiP} isPiP={isPictureInPicture} />
+          <ControlElements.TheaterButton onClick={handleTheaterToggle} isTheater={isTheaterMode} />
           <ControlElements.FullscreenButton onClick={handleFullscreen} isFullscreen={isFullscreen} />
         </div>
       </div>

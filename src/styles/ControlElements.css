@@ -182,3 +182,49 @@
   margin-left: 8px;
   flex-shrink: 0;
 }
+
+/* ─── Context menu ────────────────────────────────────────────────────────── */
+.contextMenu {
+  position: fixed;
+  z-index: 1000;
+  background-color: rgba(15, 15, 15, 0.95);
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 210px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  user-select: none;
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: background-color 0.1s;
+}
+
+.contextMenuItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.contextMenuCheck {
+  color: #60a5fa;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contextMenuDivider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
+}

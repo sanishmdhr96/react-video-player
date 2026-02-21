@@ -3,6 +3,7 @@ import {
   PauseButton,
   FullscreenButton,
   PiPButton,
+  TheaterButton,
 } from "./control-buttons";
 import VolumeControl from "./volume-control";
 import ProgressBar from "./progress-bar";
@@ -14,6 +15,7 @@ export type {
   PauseButtonProps,
   FullscreenButtonProps,
   PiPButtonProps,
+  TheaterButtonProps,
 } from "./control-buttons";
 
 export type { VolumeControlProps } from "./volume-control";
@@ -26,6 +28,7 @@ export {
   PauseButton,
   FullscreenButton,
   PiPButton,
+  TheaterButton,
 } from "./control-buttons";
 
 export { default as VolumeControl } from "./volume-control";
@@ -38,6 +41,7 @@ export const ControlElements = {
   PauseButton,
   FullscreenButton,
   PiPButton,
+  TheaterButton,
   VolumeControl,
   ProgressBar,
   SettingsMenu,
