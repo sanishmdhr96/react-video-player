@@ -23,12 +23,17 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   const containerRef = useRef<HTMLDivElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const hoverTimeTextRef = useRef<HTMLDivElement>(null);
+  const hoverIndicatorRef = useRef<HTMLDivElement>(null);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [hoverTime, setHoverTime] = useState(0);
-  const [hoverPos, setHoverPos] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [previewLoaded, setPreviewLoaded] = useState(false);
+
+  const hoverPosRef = useRef(0);
+  const hoverTimeRef = useRef(0);
+  const previewLoadedRef = useRef(false);
 
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSeekTimeRef = useRef<number>(0);
@@ -55,6 +60,13 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     return rectCacheRef.current;
   }, []);
 
+  useEffect(() => {
+    if (canvasRef.current) {
+      canvasRef.current.width = 160;
+      canvasRef.current.height = 90;
+    }
+  }, []);
+
   // ─── Preview video setup ────────────────────────────────────────────────
   useEffect(() => {
     if (!enablePreview) return;
@@ -71,19 +83,26 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     previewVideo.preload = "auto";
     previewVideo.crossOrigin = mainVideo.crossOrigin;
 
-    const onReady = () => setPreviewLoaded(true);
-    const onErr = () => { console.warn("[preview] failed to load"); setPreviewLoaded(false); };
+    const onReady = () => {
+      previewLoadedRef.current = true;
+      setPreviewLoaded(true);
+    };
+    const onErr = () => {
+      console.warn("[preview] failed to load");
+      previewLoadedRef.current = false;
+      setPreviewLoaded(false);
+    };
 
+    // loadedmetadata is sufficient — fires before loadeddata and readyState >= 1 is enough to seek
     previewVideo.addEventListener("loadedmetadata", onReady);
-    previewVideo.addEventListener("loadeddata", onReady);
     previewVideo.addEventListener("error", onErr);
 
     return () => {
       previewVideo.removeEventListener("loadedmetadata", onReady);
-      previewVideo.removeEventListener("loadeddata", onReady);
       previewVideo.removeEventListener("error", onErr);
       previewVideo.removeAttribute("src");
       previewVideo.load();
+      previewLoadedRef.current = false;
       setPreviewLoaded(false);
     };
   }, [playerRef, enablePreview]);
@@ -101,7 +120,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
 
   // ─── Draw preview frame ─────────────────────────────────────────────────
   const updatePreview = useCallback((time: number) => {
-    if (!enablePreview || !previewLoaded) return;
+    if (!enablePreview || !previewLoadedRef.current) return;
 
     const previewVideo = previewVideoRef.current;
     const canvas = canvasRef.current;
@@ -125,8 +144,6 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
         rafRef.current = requestAnimationFrame(() => {
           const ctx = canvas.getContext("2d", { alpha: false, willReadFrequently: false });
           if (!ctx) return;
-          canvas.width = 160;
-          canvas.height = 90;
           ctx.drawImage(previewVideo, 0, 0, 160, 90);
         });
       }
@@ -138,7 +155,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
     updateTimeoutRef.current = setTimeout(() => {
       if (!drawn) drawFrame();
     }, 200);
-  }, [enablePreview, previewLoaded]);
+  }, [enablePreview]);
 
   // ─── Geometry helpers (no layout thrash) ───────────────────────────────
   const getTimeFromClientX = useCallback((clientX: number): number => {
@@ -187,15 +204,19 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const time = getTimeFromClientX(e.clientX);
     const px = getPxFromClientX(e.clientX);
-    setHoverTime(time);
-    setHoverPos(px);
 
-    if (isDragging) {
+    hoverPosRef.current = px;
+    hoverTimeRef.current = time;
+    if (tooltipRef.current) tooltipRef.current.style.left = `${px}px`;
+    if (hoverIndicatorRef.current) hoverIndicatorRef.current.style.left = `${px}px`;
+    if (hoverTimeTextRef.current) hoverTimeTextRef.current.textContent = formatTime(time);
+
+    if (isDraggingRef.current) {
       playerRef.seek(time);
-    } else if (enablePreview && previewLoaded) {
+    } else if (enablePreview) {
       updatePreview(time);
     }
-  }, [isDragging, enablePreview, previewLoaded, playerRef, updatePreview, getTimeFromClientX, getPxFromClientX]);
+  }, [enablePreview, playerRef, updatePreview, getTimeFromClientX, getPxFromClientX]);
 
   const handleMouseEnter = useCallback(() => {
     rectCacheRef.current = null;
@@ -291,11 +312,11 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
         <video ref={previewVideoRef} className="previewVideo" playsInline muted preload="auto" aria-hidden="true" />
       )}
 
-      {/* Preview thumbnail tooltip */}
+      {/* Preview thumbnail tooltip — position/time updated via refs*/}
       {enablePreview && showPreview && previewLoaded && (
-        <div className="previewTooltip" style={{ left: hoverPos }} aria-hidden="true">
+        <div ref={tooltipRef} className="previewTooltip" style={{ left: hoverPosRef.current }} aria-hidden="true">
           <canvas ref={canvasRef} className="previewCanvas" />
-          <div className="previewTime">{formatTime(hoverTime)}</div>
+          <div ref={hoverTimeTextRef} className="previewTime">{formatTime(hoverTimeRef.current)}</div>
         </div>
       )}
 
@@ -304,7 +325,7 @@ const ProgressBar: React.FC<ProgressBarProps> = memo(({
         {bufferedSegments}
         <div className="progressFilled" style={{ width: `${progress}%` }} />
         {showPreview && (
-          <div className="hoverIndicator" style={{ left: hoverPos }} aria-hidden="true" />
+          <div ref={hoverIndicatorRef} className="hoverIndicator" style={{ left: hoverPosRef.current }} aria-hidden="true" />
         )}
       </div>
 
