@@ -60,9 +60,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       fullscreenContainerRef.current = containerRef.current;
     }, [fullscreenContainerRef]);
 
-    /**
-     * useImperativeHandle only fires once after mount – not 60× per second.
-     */
     React.useImperativeHandle(forwardedRef, () => playerRef, [playerRef]);
 
     const handleVideoClick = useCallback(() => {

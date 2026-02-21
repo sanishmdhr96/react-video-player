@@ -11,7 +11,6 @@ import { ControlElements } from "./control-elements";
 interface ControlsProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   playerRef: VideoPlayerRef;
-  /** Ref to the outer player container; used to scope keyboard shortcuts to the focused player */
   playerContainerRef: React.RefObject<HTMLElement | null>;
   playbackRates: PlaybackRate[];
   enablePreview: boolean;
@@ -27,12 +26,6 @@ interface ControlsProps {
   currentQualityLevel: number;
 }
 
-/**
- * Controls no longer receives currentTime, duration, or bufferedRanges.
- * ProgressBar and TimeDisplay subscribe to the video element directly,
- * so this component only re-renders on meaningful UI state changes
- * (play/pause, volume, fullscreen, quality — never on timeupdate).
- */
 export const Controls: React.FC<ControlsProps> = ({
   videoRef,
   playerRef,
