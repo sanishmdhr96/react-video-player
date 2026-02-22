@@ -12,6 +12,7 @@ import "react-helios/styles";
 export default function DemoPage() {
   const playerRef = useRef<VideoPlayerRef>(null);
   const [activeTab, setActiveTab] = useState("demo");
+  const [isTheater, setIsTheater] = useState(false);
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
@@ -48,8 +49,8 @@ export default function DemoPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 24px 80px" }}>
+      {/* Main Content — widens in theater mode */}
+      <main style={{ maxWidth: isTheater ? "1600px" : "1200px", margin: "0 auto", padding: "0 24px 80px", transition: "max-width 0.3s" }}>
         {/* Video Player Demo */}
         <section style={{ backgroundColor: "white", borderRadius: "20px", padding: "40px", marginBottom: "32px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
           <div style={{ display: "flex", gap: "16px", marginBottom: "32px", borderBottom: "2px solid #f0f0f0" }}>
@@ -87,6 +88,7 @@ export default function DemoPage() {
                   playbackRates={[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]}
                   enablePreview={true}
                   enableHLS={true}
+                  onTheaterModeChange={(t) => setIsTheater(t)}
                   onError={(err: VideoError) => console.error("Video error:", err)}
                 />
               </div>
@@ -97,23 +99,23 @@ export default function DemoPage() {
                 </h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px" }}>
                   {[
-                    { icon: Play,             label: "Play",          action: () => playerRef.current?.play() },
-                    { icon: Pause,            label: "Pause",         action: () => playerRef.current?.pause() },
-                    { icon: SkipForward,      label: "Jump 30s",      action: () => playerRef.current?.seek(30) },
-                    { icon: Volume2,          label: "50% Vol",       action: () => playerRef.current?.setVolume(0.5) },
-                    { icon: Zap,              label: "1.5× Speed",    action: () => playerRef.current?.setPlaybackRate(1.5) },
-                    { icon: Maximize,         label: "Fullscreen",    action: () => playerRef.current?.toggleFullscreen() },
-                    { icon: PictureInPicture, label: "PiP",           action: () => playerRef.current?.togglePictureInPicture() },
-                    { icon: MonitorPlay,      label: "Theater",       action: () => playerRef.current?.toggleTheaterMode() },
-                  ].map(({ icon: Icon, label, action }) => (
+                    { icon: Play,             label: "Play",       active: false,     action: () => playerRef.current?.play() },
+                    { icon: Pause,            label: "Pause",      active: false,     action: () => playerRef.current?.pause() },
+                    { icon: SkipForward,      label: "Jump 30s",   active: false,     action: () => playerRef.current?.seek(30) },
+                    { icon: Volume2,          label: "50% Vol",    active: false,     action: () => playerRef.current?.setVolume(0.5) },
+                    { icon: Zap,              label: "1.5× Speed", active: false,     action: () => playerRef.current?.setPlaybackRate(1.5) },
+                    { icon: Maximize,         label: "Fullscreen", active: false,     action: () => playerRef.current?.toggleFullscreen() },
+                    { icon: PictureInPicture, label: "PiP",        active: false,     action: () => playerRef.current?.togglePictureInPicture() },
+                    { icon: MonitorPlay,      label: "Theater",    active: isTheater, action: () => playerRef.current?.toggleTheaterMode() },
+                  ].map(({ icon: Icon, label, active, action }) => (
                     <button
                       key={label}
                       onClick={action}
                       style={{
                         padding: "16px",
-                        backgroundColor: "#f8f9fa",
-                        color: "#333",
-                        border: "2px solid #e9ecef",
+                        backgroundColor: active ? "#667eea" : "#f8f9fa",
+                        color: active ? "white" : "#333",
+                        border: `2px solid ${active ? "#667eea" : "#e9ecef"}`,
                         borderRadius: "12px",
                         cursor: "pointer",
                         fontSize: "14px",
@@ -125,12 +127,14 @@ export default function DemoPage() {
                         transition: "all 0.2s",
                       }}
                       onMouseEnter={(e) => {
+                        if (active) return;
                         e.currentTarget.style.backgroundColor = "#667eea";
                         e.currentTarget.style.color = "white";
                         e.currentTarget.style.borderColor = "#667eea";
                         e.currentTarget.style.transform = "translateY(-2px)";
                       }}
                       onMouseLeave={(e) => {
+                        if (active) return;
                         e.currentTarget.style.backgroundColor = "#f8f9fa";
                         e.currentTarget.style.color = "#333";
                         e.currentTarget.style.borderColor = "#e9ecef";
@@ -149,12 +153,12 @@ export default function DemoPage() {
           {activeTab === "features" && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px" }}>
               {[
-                { icon: Radio,      title: "HLS Streaming",      desc: "Adaptive bitrate via HLS.js. Auto quality selection with manual override. Native HLS on Safari.", color: "#667eea" },
-                { icon: Layers,     title: "VTT Thumbnails",     desc: "Sprite-sheet preview on progress bar hover, edge-clamped like YouTube. Zero extra network requests per hover.", color: "#764ba2" },
-                { icon: MonitorPlay,title: "Theater Mode",       desc: "Wide-layout theater mode toggle. Fires onTheaterModeChange for layout integration.", color: "#f093fb" },
-                { icon: Radio,      title: "Live Streams",       desc: "Infinite-duration detection, LIVE badge, GO LIVE button, and L key shortcut to seek to the live edge.", color: "#4facfe" },
-                { icon: Subtitles,  title: "Subtitles",          desc: "Multiple WebVTT subtitle tracks with language selection built into the settings menu.", color: "#43e97b" },
-                { icon: Smartphone, title: "Zero Re-renders",    desc: "timeupdate and progress events handled via direct DOM mutation. React state only changes on play/pause/volume.", color: "#fa709a" },
+                { icon: Radio,       title: "HLS Streaming",   desc: "Adaptive bitrate via HLS.js. Auto quality selection with manual override. Native HLS on Safari.", color: "#667eea" },
+                { icon: Layers,      title: "VTT Thumbnails",  desc: "Sprite-sheet preview on progress bar hover, edge-clamped like YouTube. Zero extra network requests per hover.", color: "#764ba2" },
+                { icon: MonitorPlay, title: "Theater Mode",    desc: "Wide-layout theater mode toggle. Fires onTheaterModeChange for layout integration.", color: "#f093fb" },
+                { icon: Radio,       title: "Live Streams",    desc: "Infinite-duration detection, LIVE badge, GO LIVE button, and L key shortcut to seek to the live edge.", color: "#4facfe" },
+                { icon: Subtitles,   title: "Subtitles",       desc: "Multiple WebVTT subtitle tracks with language selection built into the settings menu.", color: "#43e97b" },
+                { icon: Smartphone,  title: "Zero Re-renders", desc: "timeupdate and progress events handled via direct DOM mutation. React state only changes on play/pause/volume.", color: "#fa709a" },
               ].map(({ icon: Icon, title, desc, color }) => (
                 <div
                   key={title}
@@ -213,10 +217,10 @@ export default function DemoPage() {
               <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#333", marginBottom: "16px" }}>Progress bar focus</h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
                 {[
-                  { key: "← →",             action: "Seek ±5 seconds" },
-                  { key: "Shift + ← →",     action: "Seek ±10 seconds" },
-                  { key: "Home",             action: "Jump to start" },
-                  { key: "End",              action: "Jump to end" },
+                  { key: "← →",         action: "Seek ±5 seconds" },
+                  { key: "Shift + ← →", action: "Seek ±10 seconds" },
+                  { key: "Home",         action: "Jump to start" },
+                  { key: "End",          action: "Jump to end" },
                 ].map(({ key, action }) => (
                   <div key={key} style={{ padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "12px", border: "2px solid #e9ecef" }}>
                     <div style={{ display: "inline-block", padding: "8px 16px", backgroundColor: "white", border: "2px solid #764ba2", borderRadius: "8px", fontFamily: "monospace", fontWeight: "700", fontSize: "14px", color: "#764ba2", marginBottom: "12px" }}>
