@@ -432,11 +432,9 @@ export function useVideoPlayer(
   }, [videoRef]);
 
   const toggleTheaterMode = useCallback(() => {
-    setState((prev) => {
-      const next = !prev.isTheaterMode;
-      optionsRef.current.onTheaterModeChange?.(next);
-      return { ...prev, isTheaterMode: next };
-    });
+    const next = !stateRef.current.isTheaterMode;
+    setState((prev) => ({ ...prev, isTheaterMode: next }));
+    optionsRef.current.onTheaterModeChange?.(next);
   }, []);
 
   const getState = useCallback((): PlayerState => {
