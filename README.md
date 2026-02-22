@@ -216,6 +216,36 @@ export default function App() {
 | `getState` | `() => PlayerState` | Snapshot of current player state |
 | `getVideoElement` | `() => HTMLVideoElement \| null` | Access the underlying `<video>` element |
 
+## Theater Mode
+
+The player fires `onTheaterModeChange` when theater mode is toggled (via the `T` key, the control bar button, or `playerRef.current?.toggleTheaterMode()`). Wire it to your layout state to widen your container:
+
+```tsx
+"use client";
+
+import { useState } from "react";
+import { VideoPlayer } from "react-helios";
+
+export default function Page() {
+  const [isTheater, setIsTheater] = useState(false);
+
+  return (
+    <main
+      style={{ maxWidth: isTheater ? "1600px" : "1200px" }}
+      className="mx-auto px-6 transition-[max-width] duration-300"
+    >
+      <VideoPlayer
+        src="https://example.com/stream.m3u8"
+        controls
+        onTheaterModeChange={(t) => setIsTheater(t)}
+      />
+    </main>
+  );
+}
+```
+
+The player itself does not manage your page layout — it only notifies you so you can adapt your design.
+
 ## Subtitles
 
 ```tsx
@@ -227,6 +257,8 @@ export default function App() {
   ]}
 />
 ```
+
+Subtitle files must be served with `Access-Control-Allow-Origin` if hosted on a different origin than the page.
 
 ## Keyboard Shortcuts
 
@@ -349,6 +381,38 @@ interface ControlBarItem {
 interface ContextMenuItem {
   label: string;
   onClick: () => void;
+}
+```
+
+## Utility Functions
+
+The package exports a few helper utilities used internally, exposed for custom integrations:
+
+```ts
+import { formatTime, isHLSUrl, getMimeType } from "react-helios";
+
+formatTime(90);        // "1:30"
+formatTime(3661);      // "1:01:01"
+
+isHLSUrl("stream.m3u8");   // true
+isHLSUrl("video.mp4");     // false
+
+getMimeType("video.mp4");  // "video/mp4"
+getMimeType("video.webm"); // "video/webm"
+```
+
+For VTT parsing in custom UIs or server-side pre-processing:
+
+```ts
+import { parseThumbnailVtt, findThumbnailCue } from "react-helios";
+import type { ThumbnailCue } from "react-helios";
+
+const cues: ThumbnailCue[] = parseThumbnailVtt(vttText, baseUrl);
+
+// Binary search — O(log n)
+const cue = findThumbnailCue(cues, currentTime);
+if (cue) {
+  // cue.url, cue.x, cue.y, cue.w, cue.h
 }
 ```
 
